@@ -1,0 +1,18 @@
+{
+  "name": "meddesk-mi-band",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm run dev --workspace @meddesk/server\" \"npm run dev --workspace @meddesk/web\"",
+    "build": "npm run build --workspace @meddesk/web && npm run build --workspace @meddesk/server",
+    "test": "npm run test --workspace @meddesk/server && npm run test --workspace @meddesk/web",
+    "typecheck": "npm run typecheck --workspace @meddesk/server && npm run typecheck --workspace @meddesk/web",
+    "start": "npm run start --workspace @meddesk/server"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

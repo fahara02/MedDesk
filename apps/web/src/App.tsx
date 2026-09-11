@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkline } from "./components/Sparkline";
 import { loadReadings, saveReading } from "./lib/api";
 import { MiBand5Client } from "./lib/miband";
+import { mergeReading, type DisplayReading } from "./lib/display";
 import type { BandSnapshot, ConnectionPhase, Reading } from "./types";
 
 const phaseLabels: Record<ConnectionPhase, string> = {
@@ -20,9 +21,10 @@ export default function App() {
   const [showKey, setShowKey] = useState(false);
   const [phase, setPhase] = useState<ConnectionPhase>("idle");
   const [statusMessage, setStatusMessage] = useState("Use Chrome or Edge on this PC and keep the band close.");
-  const [current, setCurrent] = useState<Reading | null>(null);
+  const [current, setCurrent] = useState<DisplayReading | null>(null);
   const [history, setHistory] = useState<Reading[]>([]);
   const [serverOnline, setServerOnline] = useState(false);
+  const [bluetoothStatus, setBluetoothStatus] = useState("Checking browser Bluetooth support…");
   const bandClient = useRef<MiBand5Client | null>(null);
   const demoTimer = useRef<number | undefined>(undefined);
 
@@ -30,7 +32,7 @@ export default function App() {
     void loadReadings()
       .then((readings) => {
         setHistory(readings);
-        if (readings.length) setCurrent(readings.at(-1) ?? null);
+        if (readings.length) setCurrent(readings.reduce<DisplayReading | null>(mergeReading, null));
         setServerOnline(true);
       })
       .catch(() => setServerOnline(false));
@@ -39,36 +41,75 @@ export default function App() {
     events.addEventListener("ready", () => setServerOnline(true));
     events.addEventListener("reading", (event) => {
       const reading = JSON.parse((event as MessageEvent).data) as Reading;
-      setCurrent(reading);
+      setCurrent((previous) => mergeReading(previous, reading));
       setHistory((existing) => [...existing.slice(-119), reading]);
     });
     events.onerror = () => setServerOnline(false);
     return () => events.close();
   }, []);
 
-  useEffect(() => () => window.clearInterval(demoTimer.current), []);
+  useEffect(() => {
+    let active = true;
+    const updateAvailability = (available: boolean) => {
+      if (active) setBluetoothStatus(available
+        ? "Browser Bluetooth is available. Select the band to test the connection."
+        : "Browser cannot currently access Bluetooth. Check the Windows toggle and browser permissions.");
+    };
+    const bluetooth = navigator.bluetooth;
+    const availabilityChanged = () => {
+      void bluetooth.getAvailability().then(updateAvailability).catch(() => {
+        if (active) setBluetoothStatus("Bluetooth availability could not be checked. Use Connect to open the chooser.");
+      });
+    };
+    if (!window.isSecureContext || !MiBand5Client.isSupported()) {
+      setBluetoothStatus("Open this local address in Chrome or Edge to use Bluetooth.");
+    } else {
+      availabilityChanged();
+      bluetooth.addEventListener("availabilitychanged", availabilityChanged);
+    }
+    return () => {
+      active = false;
+      bluetooth?.removeEventListener("availabilitychanged", availabilityChanged);
+      window.clearInterval(demoTimer.current);
+      const client = bandClient.current;
+      bandClient.current = null;
+      void client?.disconnect();
+    };
+  }, []);
 
   const connect = async () => {
+    if (bandClient.current) return;
     stopDemo();
+    setCurrent(null);
+    setHistory([]);
     const client = new MiBand5Client({
       onPhase: (nextPhase, message) => {
+        if (bandClient.current !== client) return;
         setPhase(nextPhase);
         if (message) setStatusMessage(message);
+        if (nextPhase === "disconnected" || nextPhase === "error") bandClient.current = null;
       },
-      onSnapshot: (snapshot) => void submitSnapshot(snapshot, "band"),
+      onSnapshot: (snapshot) => {
+        if (bandClient.current === client) void submitSnapshot(snapshot, "band");
+      },
     });
     bandClient.current = client;
     try {
       await client.connect(authKey);
     } catch (error) {
+      if (bandClient.current !== client) return;
+      bandClient.current = null;
       setPhase("error");
       setStatusMessage(error instanceof Error ? error.message : "Could not connect to the band.");
     }
   };
 
   const disconnect = async () => {
-    await bandClient.current?.disconnect();
+    const client = bandClient.current;
     bandClient.current = null;
+    await client?.disconnect();
+    setPhase("disconnected");
+    setStatusMessage("Band disconnected. Close any device chooser that is still open.");
   };
 
   const submitSnapshot = async (snapshot: BandSnapshot, source: Reading["source"]) => {
@@ -77,7 +118,7 @@ export default function App() {
       observedAt: snapshot.observedAt || new Date().toISOString(),
       source,
     };
-    setCurrent(reading);
+    setCurrent((previous) => mergeReading(previous, reading));
     try {
       await saveReading(reading);
       setServerOnline(true);
@@ -88,9 +129,10 @@ export default function App() {
   };
 
   const startDemo = async () => {
-    await bandClient.current?.disconnect();
-    bandClient.current = null;
+    await disconnect();
     stopDemo();
+    setCurrent(null);
+    setHistory([]);
     setPhase("demo");
     setStatusMessage("Showing generated readings so you can review the dashboard.");
     let tick = 0;
@@ -122,11 +164,11 @@ export default function App() {
   };
 
   const heartRateValues = useMemo(
-    () => history.flatMap((reading) => (reading.heartRate === undefined ? [] : [reading.heartRate])).slice(-40),
-    [history],
+    () => history.flatMap((reading) => (reading.source !== current?.source || reading.deviceName !== current?.deviceName || reading.heartRate === undefined ? [] : [reading.heartRate])).slice(-40),
+    [history, current?.source, current?.deviceName],
   );
   const isBusy = phase === "selecting" || phase === "connecting" || phase === "authenticating";
-  const isActive = phase === "connected" || phase === "demo";
+  const isActive = phase === "connected";
   const updated = current?.observedAt
     ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(
         new Date(current.observedAt),
@@ -186,18 +228,20 @@ export default function App() {
             </button>
           </div>
           <p className="field-help">Use the key from get-band-key.ps1 after pairing in Zepp Life with a Zepp email account. Do not paste your password here.</p>
+          <p className="field-help" role="status">{bluetoothStatus}</p>
 
           {phase === "connected" ? (
             <button className="primary-button disconnect" type="button" onClick={() => void disconnect()}>
               Disconnect band
             </button>
           ) : (
-            <button className="primary-button" type="button" disabled={isBusy || authKey.trim().length < 32} onClick={() => void connect()}>
+            <button className="primary-button" type="button" disabled={isBusy || !MiBand5Client.isSupported() || !/^(0x)?[0-9a-f]{32}$/i.test(authKey.trim())} onClick={() => void connect()}>
               <BluetoothIcon />
               {isBusy ? "Connecting…" : "Connect Mi Band 5"}
             </button>
           )}
-          <button className="secondary-button" type="button" onClick={phase === "demo" ? stopDemo : () => void startDemo()}>
+          {isBusy && <button className="secondary-button" type="button" onClick={() => void disconnect()}>Cancel connection</button>}
+          <button className="secondary-button" type="button" disabled={isBusy} onClick={phase === "demo" ? stopDemo : () => void startDemo()}>
             {phase === "demo" ? "Pause preview" : "Preview with demo data"}
           </button>
 
@@ -220,14 +264,14 @@ export default function App() {
               <p className="eyebrow">LIVE OVERVIEW</p>
               <h2>Today at a glance</h2>
             </div>
-            <div className={`live-badge ${isActive ? "active" : ""}`}><span />{isActive ? "LIVE" : "STANDBY"}</div>
+            <div className={`live-badge ${isActive ? "active" : ""}`}><span />{phase === "demo" ? "DEMO" : isActive ? "CONNECTED" : "STANDBY"}</div>
           </div>
 
           <div className="metrics-grid">
             <article className="metric-card heart-card">
               <div className="metric-top"><HeartIcon /><span>HEART RATE</span></div>
               <div className="metric-value">{formatMetric(current?.heartRate)} <small>BPM</small></div>
-              <p>{current?.heartRate ? heartRateCaption(current.heartRate) : "Waiting for a live measurement"}</p>
+              <p>{current?.heartRateObservedAt ? `Last measured ${new Date(current.heartRateObservedAt).toLocaleTimeString()}` : "Waiting for a live measurement"}</p>
               <Sparkline values={heartRateValues} />
             </article>
 
@@ -285,12 +329,6 @@ function formatMetric(value?: number) {
 
 function formatDistance(value?: number) {
   return value === undefined ? "—" : (value / 1000).toFixed(2);
-}
-
-function heartRateCaption(value: number) {
-  if (value < 60) return "Below the usual resting range";
-  if (value <= 100) return "Within the usual resting range";
-  return "Above the usual resting range";
 }
 
 function BluetoothIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 5 4.5-5 4.5 5 4.5-5 4.5V3Zm0 9L7.5 7.8M12 12l-4.5 4.2" /></svg>; }

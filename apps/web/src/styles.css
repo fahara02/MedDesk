@@ -56,6 +56,7 @@ label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; }
 .primary-button.disconnect { background: #32423c; }
 .secondary-button { margin-top: 9px; color: var(--green); border: 1px solid #ccdad4; background: transparent; }
 .secondary-button:hover { background: #f4f8f5; }
+.secondary-button:disabled { cursor: not-allowed; opacity: .45; }
 .connection-state { display: flex; gap: 12px; margin-top: 20px; padding: 14px; border-radius: 11px; background: #f3f6f4; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .connection-state strong { display: block; color: var(--ink); margin-bottom: 2px; font-size: 12px; }
 .pulse-dot { width: 8px; height: 8px; margin-top: 4px; flex: none; border-radius: 50%; background: #9ea8a3; }

@@ -51,6 +51,33 @@ Then open `http://localhost:8787`, close Zepp Life or disable the phone's Blueto
 - Physical Mi Band testing remained pending because the original PC exposed no Bluetooth radio to Windows even though Bluetooth services and inbox drivers were present.
 - On the laptop, first confirm Windows shows a Bluetooth toggle and Chrome or Edge can open the Web Bluetooth chooser. Continue with the troubleshooting section in `PAIRING.md` if the band is not listed.
 
+## Current continuation — 12 September 2026, E:\MedDesk
+
+- Windows now exposes a Realtek Bluetooth Adapter and a Microsoft Bluetooth LE
+  Enumerator, both status OK. The original no-radio finding no longer describes
+  this machine. Physical Mi Band authentication and real readings remain unverified.
+- Dependencies were installed from the lockfile. No `.env` or band auth key was
+  present when this continuation started. Enter the key only into the local app;
+  never request it in chat or commit it.
+- Connection attempts now clean up after rejection, cancellation, discovery
+  failure, timeout and link loss. All GATT work is serialized; periodic polling
+  schedules the next request only after the previous one completes.
+- Summary packets no longer resend an old heart rate with a fresh timestamp.
+  The display retains the heart rate's actual observation time. Demo data has a
+  DEMO overview badge. No automatic resting-range interpretation is displayed.
+- Regression tests use a simulated GATT device and the known AES test vector;
+  these prove the client state handling, not physical device compatibility.
+- Browser automation found no connected browser; Chrome is installed but was
+  stopped and lacked the ChatGPT extension. Manual Chrome/Edge use remains possible.
+- The full objective remains a doctor-facing app with prescription writing, AI
+  interaction and patient vitals. The current app is still the band monitor;
+  prescribing, patient/encounter attribution and the AI workflow remain to build
+  after the first physical band connection. Do not mark the full objective complete.
+- Validation in this continuation: 17 browser-client unit tests and two server
+  tests pass; the TypeScript/Vite production build passes. The built server was
+  started on port 8787 and `/api/health` returned `ok: true`; `/` returned HTTP 200.
+  Recheck the process and endpoint on resume. No physical reading has been claimed.
+
 ## Security notes
 
 - Never commit `.env`, a band auth key, `data/readings.jsonl`, or account credentials.

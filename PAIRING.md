@@ -30,7 +30,7 @@ If your band is new and not paired yet, continue with Step 1. If you already pai
 
 ## Step 2: put the Zepp credentials in `.env`
 
-Open `G:\Labaid\MedDesk\.env` and use this shape:
+Open `.env` in your MedDesk checkout (currently `E:\MedDesk\.env`) and use this shape:
 
 ```dotenv
 ACCOUNT_METHOD=amazfit
@@ -42,7 +42,7 @@ PASSWORD=your-zepp-password
 
 ## Step 3: extract the Bluetooth auth key
 
-From PowerShell in `G:\Labaid\MedDesk`, run:
+From PowerShell in your MedDesk checkout, run:
 
 ```powershell
 .\get-band-key.ps1
@@ -62,11 +62,21 @@ Windows must show a Bluetooth toggle under **Settings → Bluetooth & devices**.
 - If the PC has no Bluetooth hardware, connect a Windows-compatible Bluetooth 4.0 or newer USB adapter and install its driver.
 - Do not add the Mi Band manually through Windows **Add device**. The MedDesk page opens the correct browser Bluetooth chooser itself.
 
-This computer currently reports no Bluetooth adapter, so this step must be resolved before the physical connection can work.
+The original PC had no Bluetooth adapter. On 12 September 2026, Windows on the
+current PC reported a Realtek Bluetooth Adapter and Microsoft Bluetooth LE
+Enumerator, both with status OK. Confirm the toggle and browser access locally;
+the presence of the adapter alone does not prove a connection to the band.
 
 ## Step 5: start the server and dashboard
 
-The dependencies and production build are already prepared. From the project folder, run:
+From the project folder, install dependencies and build once after cloning:
+
+```powershell
+npm ci
+npm run build
+```
+
+Then start the server:
 
 ```powershell
 npm start
@@ -88,8 +98,21 @@ The header should say **Local server online**. You can click **Preview with demo
 4. Click **Connect Mi Band 5**. This click is required by browser Bluetooth security.
 5. In the Chrome/Edge chooser, select **Mi Smart Band 5**, **Mi Band 5**, or the device whose name starts with `Mi`.
 6. Click **Pair** or **Connect** in the chooser. Confirm on the band if it displays a check mark.
-7. Wait up to 30 seconds. The status should move through **Connecting**, **Authenticating**, and **Live**. The green heart-rate LEDs under the band should turn on.
+7. The status should move through **Connecting**, **Authenticating**, and **Live**. The overview badge says **CONNECTED**; this describes the link, while the heart-rate card shows the time of its last actual measurement. The green heart-rate LEDs under the band should turn on. Individual Bluetooth operations and authentication time out after 15 seconds with a retryable error.
 8. Heart rate, steps, distance, calories, and battery will appear. Node saves readings locally in `data/readings.jsonl`.
+
+**Cancel connection** releases the app's attempt. If the browser chooser remains
+open, close it too; a later selection from that cancelled attempt cannot start
+monitoring. A failure releases the connection before retrying. Preview mode is
+labeled **DEMO** and does not prove that physical Bluetooth works.
+
+Chrome/Edge do not need the ChatGPT extension to connect to the band. The extension
+is needed only if you want the coding assistant to operate the browser for you.
+
+The browser connection follows [Chrome's Web Bluetooth documentation](https://developer.chrome.com/docs/capabilities/bluetooth),
+including user-initiated device selection, reacquiring characteristics after
+disconnect, and serializing GATT operations. Mi Band 5 auth-key pairing is also
+documented in [Gadgetbridge's Xiaomi device guide](https://gadgetbridge.org/gadgets/wearables/xiaomi/).
 
 ## Troubleshooting
 

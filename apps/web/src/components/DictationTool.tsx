@@ -1,3 +1,4 @@
+import { workspaceFetch } from "../lib/session";
 import { useEffect, useRef, useState } from "react";
 
 interface RecognitionResult { isFinal: boolean; 0: { transcript: string }; }
@@ -140,7 +141,7 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
     const controller = new AbortController(); upload.current = controller;
     setMode("uploading"); setStatus("Sending your sample for the requested comparison…");
     try {
-      const response = await fetch("/api/audio-samples", { method: "POST", headers: { "Content-Type": sample.type, "X-Audio-Language": language }, body: sample, signal: controller.signal });
+      const response = await workspaceFetch("/api/audio-samples", { method: "POST", headers: { "Content-Type": sample.type, "X-Audio-Language": language }, body: sample, signal: controller.signal });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The sample could not be sent.");
       if (!controller.signal.aborted) setStatus(`Sample received: ${result.sample.id}. Model comparison is pending; no accuracy score has been assigned.`);

@@ -1,5 +1,6 @@
 import { parseConsultation } from "../../../server/src/clinical-model";
 import { practice } from "./branding";
+import { workspaceFetch } from "./session";
 export { parseConsultation };
 export type {
   Patient,
@@ -38,7 +39,7 @@ export interface Artifact {
 }
 
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options);
+  const response = await workspaceFetch(url, options);
   const data = await response.json();
   if (!response.ok)
     throw new Error(data.error || "The request could not be completed.");

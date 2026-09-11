@@ -219,6 +219,41 @@ speech runtime because the active application uses it.
 
 ## Working rules
 
+Latest deployment, September 12: `https://medesk.lifeplusbd.tech` is live on
+`72.62.69.41`, SSH user `root`, key `C:/Users/FHR/.ssh/id_ed25519_newage`.
+The current release is `/opt/meddesk/releases/20260912-studio-login`, linked from
+`/opt/meddesk/current`. Nginx serves HTTPS; the Node container binds only
+127.0.0.1:8792 and retains the `meddesk_clinical_data` volume. The branded React
+login replaces HTTP Basic Auth. The owner's existing username and chosen password
+remain in ignored `deploy/access.env`; only a salted scrypt hash enters server.env.
+Run `node scripts/configure-login.mjs` after building to update that hash without
+printing credentials. The private proxy secret remains required independently.
+
+Sessions use a 12-hour HttpOnly/Secure/SameSite=Strict host-only cookie and a bounded
+in-memory token-hash registry. Restart means signing in again. Logout revokes
+the session and closes its SSE streams. The public shell contains no patient data;
+clinical APIs, sample recordings and installer downloads require a session.
+Desktop enrollment/uplink keep their code/bearer authentication. Preserve local
+draft recovery across the sign-in boundary. The previous image is retained as
+`meddesk:pre-login-20260912`; restore Basic Auth BEFORE rolling back to that image.
+
+Login release verification: 22 server tests, 38 web tests (physical live test
+not run for this auth change), both HTTP integration tests, production build and
+credential routing passed. Actual HTTPS verified the public shell has no challenge,
+the exact hospital logo, chosen-password login, cookie flags, 9,763 products,
+authenticated SSE, installer access, foreign-origin refusal, immediate SSE closure
+and rejected cookie replay after logout. See `reports/login-deployment-20260912.json`.
+Browser discovery still returned no connection; visual browser QA is unverified.
+The first probe immediately after Nginx reload reached an old worker and returned
+401; the subsequent complete HTTPS verification passed with no browser challenge.
+
+Earlier voice deployment is also complete: the requested backend model responds,
+actual assistant/RAG and Bengali WAV synthesis were verified, the hospital logo
+and clinician name are deployed, and dictation/sample capture are implemented.
+No owner audio sample or physical remote bridge observation has been verified.
+The older deployment-blocked notes above describe earlier milestones, not current
+state. Native `.lps` implementation remains paused and incomplete.
+
 Preserve local changes and the owner's `.env`. Only the main session writes
 tests; do not wake the paused native lanes. All milestone commits must use sole
 author and committer **fahara02 <idea3d.faruk@gmail.com>**, without coauthors or

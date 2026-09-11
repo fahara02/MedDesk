@@ -1,0 +1,25 @@
+{
+  "date": "2026-09-11T23:11:21.138Z",
+  "url": "https://medesk.lifeplusbd.tech",
+  "publicShell": 200,
+  "browserChallenge": false,
+  "bundle": "/assets/index-CfT1DW7E.js",
+  "brandedLogin": true,
+  "exactLogo": true,
+  "unauthenticatedClinicalRequests": 401,
+  "wrongPassword": 401,
+  "login": 200,
+  "cookieFlags": [
+    "HttpOnly",
+    "Secure",
+    "SameSite=Strict",
+    "Path=/"
+  ],
+  "products": 9763,
+  "installer": 200,
+  "crossOriginLogout": 403,
+  "authenticatedSse": 200,
+  "logoutClosesSse": true,
+  "loggedOutCookieReplay": 401,
+  "bridgeRequiresBearer": 401
+}

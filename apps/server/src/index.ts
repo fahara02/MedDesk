@@ -15,10 +15,13 @@ import { SpeechService } from "./speech.js";
 import { AudioSamples } from "./audio-samples.js";
 import { BridgeRegistry } from "./bridge-registry.js";
 import { remoteAccess } from "./remote-access.js";
+import { WorkspaceAuth } from "./auth.js";
 import { mkdir } from "node:fs/promises";
 
 const port = Number(process.env.PORT) || 8787;
 const app = express();
+const auth = new WorkspaceAuth(process.env.MEDDESK_PUBLIC_ORIGIN,
+  process.env.MEDDESK_LOGIN_USER, process.env.MEDDESK_PASSWORD_HASH);
 const dataDirectory = path.resolve(
   process.env.MEDDESK_DATA_DIR ||
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../data"),
@@ -81,6 +84,7 @@ app.use((_request, response, next) => {
   response.setHeader("X-Frame-Options", "DENY");
   next();
 });
+app.use(auth.middleware);
 
 app.get("/api/capabilities", (_request, response) =>
   response.json({
@@ -302,6 +306,7 @@ app.get("/api/events", (request, response) => {
   response.write("retry: 3000\nevent: ready\ndata: {}\n\n");
   response.write(`event: band-status\ndata: ${JSON.stringify(status)}\n\n`);
   eventClients.add(response);
+  auth.watchStream(request, response);
   response.on("close", () => eventClients.delete(response));
 });
 
@@ -402,6 +407,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.once(signal, () => {
     void bandReader.stop().finally(() => {
       server.close();
+      auth.close();
       for (const client of eventClients) client.end();
       process.exit(0);
     });

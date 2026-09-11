@@ -80,6 +80,9 @@ export function useBand() {
     events.onerror = () => {
       if (active) setOnline(false);
     };
+    events.addEventListener("auth-expired", () => {
+      if (active) window.dispatchEvent(new Event("meddesk:sign-in-required"));
+    });
     return () => {
       active = false;
       events.close();

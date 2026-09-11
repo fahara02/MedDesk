@@ -21,6 +21,7 @@ project's 95 engineering tasks. This matrix does not alter that task denominator
 | Multiple PCs and offline behavior | Verified locally | Enrollment, revocation, per-PC selector, bounded durable queue and historical timestamps. |
 | Physical local Bluetooth dashboard | Verified | Server 8791; actual SSE-to-React test passed after graceful handover. |
 | Remote site on 72.62.69.41 | Deployed and verified | https://medesk.lifeplusbd.tech; Nginx HTTPS, protected dashboard, healthy private Docker service, drug seed, TTS, assistant and SSE verified. |
+| Branded sign-in page | Deployed and verified | React login replaces the browser prompt; existing credentials retained. Cookie sessions, sign-out, rate limiting and SSE revocation verified over HTTPS. |
 
 Next: receive the owner's audio sample and compare recognition accuracy, enroll
 a real PC and verify remote physical readings, and resolve the native `.lps`

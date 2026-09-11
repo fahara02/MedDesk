@@ -1,7 +1,8 @@
+import { workspaceFetch } from "./session";
 import type { Reading } from "../types";
 
 export async function saveReading(reading: Reading) {
-  const response = await fetch("/api/readings", {
+  const response = await workspaceFetch("/api/readings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(reading),
@@ -12,7 +13,7 @@ export async function saveReading(reading: Reading) {
 }
 
 export async function loadReadings(limit = 120, bridgeId = "") {
-  const response = await fetch(
+  const response = await workspaceFetch(
     `/api/readings?limit=${limit}${bridgeId ? "&bridgeId=" + encodeURIComponent(bridgeId) : ""}`,
   );
   if (!response.ok) throw new Error("Could not load local history.");

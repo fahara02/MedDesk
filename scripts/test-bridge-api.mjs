@@ -8,6 +8,7 @@ import os from "node:os";
 import net from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { hashPassword } from "../apps/server/dist/auth.js";
 
 test(
   "remote HTTP access, enrollment, authenticated SSE, retries, PC isolation and revocation",
@@ -25,7 +26,17 @@ test(
     const base = `http://127.0.0.1:${port}`,
       secret = "synthetic-proxy-secret-for-isolated-tests-only";
     let child, stream;
-    const proxy = { "X-MedDesk-Proxy": secret };
+    const origin = "https://medesk.lifeplusbd.tech";
+    const proxy = { "X-MedDesk-Proxy": secret, Origin: origin };
+    const passwordHash = await hashPassword("synthetic-test-password");
+    async function signIn() {
+      const response = await fetch(base + "/api/auth/login", {
+        method: "POST", headers: { ...proxy, "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "test-doctor", password: "synthetic-test-password" }),
+      });
+      assert.equal(response.status, 200);
+      proxy.Cookie = response.headers.get("set-cookie").split(";")[0];
+    }
     async function start() {
       child = spawn(process.execPath, ["apps/server/dist/index.js"], {
         cwd: root,
@@ -39,6 +50,8 @@ test(
           MEDDESK_LUNA_ENV: path.join(directory, "missing.env"),
           MEDDESK_PUBLIC_ORIGIN: "https://medesk.lifeplusbd.tech",
           MEDDESK_PROXY_SECRET: secret,
+          MEDDESK_LOGIN_USER: "test-doctor",
+          MEDDESK_PASSWORD_HASH: passwordHash,
         },
       });
       for (let i = 0; i < 100; i++) {
@@ -73,6 +86,8 @@ test(
     }
     try {
       await start();
+      await request("/api/readings", undefined, proxy, 401);
+      await signIn();
       await request("/api/readings", undefined, {}, 401);
       await request("/api/bridge/invites", { label: "Test PC" }, {}, 401);
       await request(
@@ -164,6 +179,8 @@ test(
       stream = undefined;
       await stop();
       await start();
+      await request("/api/readings", undefined, proxy, 401);
+      await signIn();
       await request("/api/bridge/uplink", body, authorization);
       assert.deepEqual(
         (await request("/api/readings" + query)).readings,

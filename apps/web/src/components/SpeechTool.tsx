@@ -1,3 +1,4 @@
+import { workspaceFetch } from "../lib/session";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/clinic";
 import type { SpeechVoice } from "../../../server/src/speech";
@@ -79,7 +80,7 @@ export function SpeechTool({ text }: { text: string }) {
       pending.current = controller;
       setBusy(true);
       try {
-        const response = await fetch("/api/speech", {
+        const response = await workspaceFetch("/api/speech", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

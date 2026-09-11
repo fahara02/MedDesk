@@ -59,7 +59,7 @@ function recoverDraft() {
   return newConsultation();
 }
 
-export default function App() {
+export default function App({ onLogout }: { onLogout?: () => void } = {}) {
   const [draft, setDraft] = useState<ConsultationInput>(recoverDraft),
     [page, setPage] = useState(() =>
       window.location.hash === "#vitals" ? "vitals" : "studio",
@@ -143,7 +143,10 @@ export default function App() {
         );
       }
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      try { localStorage.setItem(STORAGE, JSON.stringify(draft)); } catch {}
+    };
   }, [draft]);
   useEffect(() => {
     const before = (e: BeforeUnloadEvent) => {
@@ -385,6 +388,7 @@ export default function App() {
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
+            {onLogout && <button className="sign-out-button" onClick={onLogout}>Sign out</button>}
             <select
               className="role-switch"
               aria-label="Demonstration workspace"

@@ -6,12 +6,13 @@ Target: `https://medesk.lifeplusbd.tech` on `72.62.69.41`.
 
 The site is deployed. SSH uses `root` and the matching existing private key.
 Nginx already serves other applications, so `compose.nginx.yml` publishes only
-`127.0.0.1:8792`; Nginx provides HTTPS and the dashboard login. The current release
-is `/opt/meddesk/releases/20260912-studio-voice`, linked from `/opt/meddesk/current`.
+`127.0.0.1:8792`; Nginx provides HTTPS and Node provides the branded React login.
+The current release is `/opt/meddesk/releases/20260912-studio-login`, linked from `/opt/meddesk/current`.
 The app uses the persistent Docker volume `meddesk_clinical_data`.
 
-Private settings live in `/opt/meddesk/shared/server.env` (0600), with the dashboard
-password hash in `dashboard.htpasswd` (0640, root:www-data). The owner's local
+Private settings live in `/opt/meddesk/shared/server.env` (0600), including the login
+username and salted scrypt password hash. The old `dashboard.htpasswd` is retained
+only for rollback; Nginx no longer challenges browsers. The owner's local
 login copy is `E:/MedDesk/deploy/access.env`; never add it to Git. The internal
 proxy header is set by `proxy-secret.conf`, not by browsers. Existing sites were
 not replaced. The certificate expires December 10, 2026; Certbot's active renewal
@@ -26,7 +27,7 @@ observations still require enrolling the Windows bridge.
 
 To update after copying a verified source release and linking its private env file:
 `docker compose -f deploy/compose.nginx.yml up -d --build --wait app`.
-The previous application image is retained as `meddesk:pre-voice-20260912` for
+The previous application image is retained as `meddesk:pre-login-20260912` for
 rollback. Preserve the shared data volume when changing releases.
 
 ```text
@@ -55,39 +56,55 @@ release the phone connection, and supply that band's authentication key locally.
    directory, excluding `.env`, local credentials, clinical `data/`, Git, caches,
    `node_modules`, and build scratch files. `scripts/package-deployment.ps1` makes
    this allowlisted archive.
-3. On a Linux server with Docker Compose, create `deploy/server.env` and
-   `deploy/proxy.env`, readable only by the deployment account. Use one generated
-   32-byte random proxy secret in both files. Generate the dashboard password hash
-   with Caddy's interactive `caddy hash-password` command. Store the resulting hash
-   in single quotes in the Compose env file so dollar signs remain literal.
+3. Create private `deploy/server.env` and `deploy/access.env` in the source checkout.
+   Put `MEDDESK_LOGIN_USER` and `MEDDESK_LOGIN_PASSWORD` in `access.env`, then run
+   `npm run build` and `node scripts/configure-login.mjs` to add a salted password
+   hash to `server.env`. Never copy the plaintext password into source or browser
+   configuration. Use one generated 32-byte random proxy secret for Node and the
+   proxy. Restrict private files to the deployment account (0600 on Linux).
 
    `server.env`:
    ```dotenv
    MEDDESK_PUBLIC_ORIGIN=https://medesk.lifeplusbd.tech
    MEDDESK_PROXY_SECRET=<random secret>
+   MEDDESK_LOGIN_USER=<doctor login>
+   MEDDESK_PASSWORD_HASH=scrypt:<salt hex>:<key hex>
    ```
    `proxy.env`:
    ```dotenv
-   MEDDESK_LOGIN_USER=<doctor login>
-   MEDDESK_PASSWORD_HASH='<Caddy password hash>'
    MEDDESK_PROXY_SECRET=<same random secret>
    ```
 4. If ports 80 and 443 are available, run
    `docker compose -f deploy/compose.yml up -d --build`. Caddy obtains HTTPS
    certificates after DNS reaches this server. If a reverse proxy already serves
-   other sites, add an equivalent authenticated virtual host to that proxy;
+   other sites, add an equivalent virtual host with the internal proxy header;
    **do not replace it or occupy its ports**. The Node port must stay private.
 5. Sign in through the HTTPS website and verify the health page, UI, and SSE.
    Create an enrollment code in Vitals, install the bridge, select that PC in the
    dashboard, and verify physical readings. Do not call a build a live deployment.
 
-Only the enrollment and uplink POST routes bypass the doctor's proxy login:
+Only the enrollment and uplink POST routes bypass the doctor's session login:
 enrollment requires a random single-use code expiring in ten minutes, and uplink
-requires a revocable desktop bearer credential. All other pages and APIs require
-the dashboard login. Node additionally requires the internal proxy secret in remote
-mode, and rejects browser mutations from other origins. The deployment is a
+requires a revocable desktop bearer credential. The login shell, logo, bundled
+assets, session status and health endpoint are public; clinical APIs, SSE and
+installer downloads require a server session. Node additionally requires the
+internal proxy secret in remote mode and an exact same-origin header on browser
+mutations. Login sets a 12-hour HttpOnly, Secure, SameSite=Strict host-only cookie;
+the server stores only its token hash in memory. Logout immediately revokes that
+session and closes its SSE connections. Server restarts require signing in again.
+Failed login attempts are limited to ten per IP per fifteen minutes, with two
+concurrent password checks and bounded session/limiter memory. Reverse proxies
+must overwrite `X-Forwarded-For`. A missing login configuration refuses startup.
+Existing browser draft recovery remains local and resumes after sign-in.
+The deployment is a
 single-workspace demo; it does not implement tenant isolation or individual doctor
 roles. Do not expose the current unprotected local configuration to the internet.
+
+For rollback, restore the previous Nginx Basic Auth configuration before starting
+the older application image. That image does not enforce session authentication.
+
+Implementation references: [Node scrypt](https://nodejs.org/api/crypto.html#cryptoscryptpassword-salt-keylen-options-callback)
+and [cookie attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie).
 
 ## Install and operate the desktop bridge
 

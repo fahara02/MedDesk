@@ -1,342 +1,716 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkline } from "./components/Sparkline";
-import { loadReadings, saveReading } from "./lib/api";
-import { MiBand5Client } from "./lib/miband";
-import { mergeReading, type DisplayReading } from "./lib/display";
-import type { BandSnapshot, ConnectionPhase, Reading } from "./types";
+import { useEffect, useRef, useState } from "react";
+import {
+  api,
+  blankMedication,
+  clinicalSections,
+  download,
+  exampleConsultation,
+  importDraft,
+  newConsultation,
+  parseConsultation,
+  reviewIssues,
+  serializeDraft,
+  type Capabilities,
+  type Consultation,
+  type ConsultationInput,
+  type ConsultationSummary,
+  type Medicine,
+} from "./lib/clinic";
+import { useBand } from "./lib/useBand";
+import { Icon } from "./components/Icon";
+import { Badge, Modal } from "./components/ui";
+import { PrescriptionPaper } from "./components/PrescriptionPaper";
+import { MedicineLibrary } from "./components/MedicineLibrary";
+import { Studio } from "./components/Studio";
+import { Settings } from "./components/Settings";
+import { Assistant } from "./components/Assistant";
+import {
+  EvidenceWorkspace,
+  HistoryWorkspace,
+  ImportWorkspace,
+  PharmacyWorkspace,
+  ReaderWorkspace,
+  ShowcaseWorkspace,
+  VitalsWorkspace,
+} from "./components/WorkspacePages";
 
-const phaseLabels: Record<ConnectionPhase, string> = {
-  idle: "Ready to connect",
-  selecting: "Choose your band",
-  connecting: "Connecting",
-  authenticating: "Authenticating",
-  connected: "Live",
-  disconnected: "Disconnected",
-  error: "Needs attention",
-  demo: "Demo stream",
-};
+const navigation = [
+  ["studio", "Prescription studio", "studio"],
+  ["import", "Import & review", "import"],
+  ["medicine", "Medicine library", "medicine"],
+  ["reader", "Patient reader", "reader"],
+  ["history", "Patient records", "history"],
+  ["vitals", "Vitals & devices", "vitals"],
+  ["pharmacy", "Pharmacy", "pharmacy"],
+  ["evidence", "Evidence & trust", "evidence"],
+  ["showcase", "Product showcase", "showcase"],
+] as const;
+const STORAGE = "meddesk.workspace.v1";
+function recoverDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE);
+    if (raw)
+      return parseConsultation(JSON.parse(raw), true) ?? newConsultation();
+  } catch {}
+  return newConsultation();
+}
 
 export default function App() {
-  const [authKey, setAuthKey] = useState("");
-  const [showKey, setShowKey] = useState(false);
-  const [phase, setPhase] = useState<ConnectionPhase>("idle");
-  const [statusMessage, setStatusMessage] = useState("Use Chrome or Edge on this PC and keep the band close.");
-  const [current, setCurrent] = useState<DisplayReading | null>(null);
-  const [history, setHistory] = useState<Reading[]>([]);
-  const [serverOnline, setServerOnline] = useState(false);
-  const [bluetoothStatus, setBluetoothStatus] = useState("Checking browser Bluetooth support…");
-  const bandClient = useRef<MiBand5Client | null>(null);
-  const demoTimer = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    void loadReadings()
-      .then((readings) => {
-        setHistory(readings);
-        if (readings.length) setCurrent(readings.reduce<DisplayReading | null>(mergeReading, null));
-        setServerOnline(true);
-      })
-      .catch(() => setServerOnline(false));
-
-    const events = new EventSource("/api/events");
-    events.addEventListener("ready", () => setServerOnline(true));
-    events.addEventListener("reading", (event) => {
-      const reading = JSON.parse((event as MessageEvent).data) as Reading;
-      setCurrent((previous) => mergeReading(previous, reading));
-      setHistory((existing) => [...existing.slice(-119), reading]);
-    });
-    events.onerror = () => setServerOnline(false);
-    return () => events.close();
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    const updateAvailability = (available: boolean) => {
-      if (active) setBluetoothStatus(available
-        ? "Browser Bluetooth is available. Select the band to test the connection."
-        : "Browser cannot currently access Bluetooth. Check the Windows toggle and browser permissions.");
-    };
-    const bluetooth = navigator.bluetooth;
-    const availabilityChanged = () => {
-      void bluetooth.getAvailability().then(updateAvailability).catch(() => {
-        if (active) setBluetoothStatus("Bluetooth availability could not be checked. Use Connect to open the chooser.");
-      });
-    };
-    if (!window.isSecureContext || !MiBand5Client.isSupported()) {
-      setBluetoothStatus("Open this local address in Chrome or Edge to use Bluetooth.");
-    } else {
-      availabilityChanged();
-      bluetooth.addEventListener("availabilitychanged", availabilityChanged);
-    }
-    return () => {
-      active = false;
-      bluetooth?.removeEventListener("availabilitychanged", availabilityChanged);
-      window.clearInterval(demoTimer.current);
-      const client = bandClient.current;
-      bandClient.current = null;
-      void client?.disconnect();
-    };
-  }, []);
-
-  const connect = async () => {
-    if (bandClient.current) return;
-    stopDemo();
-    setCurrent(null);
-    setHistory([]);
-    const client = new MiBand5Client({
-      onPhase: (nextPhase, message) => {
-        if (bandClient.current !== client) return;
-        setPhase(nextPhase);
-        if (message) setStatusMessage(message);
-        if (nextPhase === "disconnected" || nextPhase === "error") bandClient.current = null;
-      },
-      onSnapshot: (snapshot) => {
-        if (bandClient.current === client) void submitSnapshot(snapshot, "band");
-      },
-    });
-    bandClient.current = client;
+  const [draft, setDraft] = useState<ConsultationInput>(recoverDraft),
+    [page, setPage] = useState(() => window.location.hash === '#vitals' ? 'vitals' : 'studio'),
+    [mobile, setMobile] = useState(false);
+  const [role, setRole] = useState("doctor");
+  const [caps, setCaps] = useState<Capabilities | null>(null),
+    [records, setRecords] = useState<ConsultationSummary[]>([]);
+  const [notice, setNotice] = useState(""),
+    [storageError, setStorageError] = useState(""),
+    [recordError, setRecordError] = useState("");
+  const [saving, setSaving] = useState(false),
+    [lastSaved, setLastSaved] = useState("");
+  const [modal, setModal] = useState<
+      "medicine" | "review" | "command" | "replace" | null
+    >(null),
+    [command, setCommand] = useState("");
+  const [pending, setPending] = useState<ConsultationInput | null>(null),
+    [assistantOpen, setAssistantOpen] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null),
+    noticeTimer = useRef<number | undefined>(undefined),
+    savingRef = useRef(false),
+    saveRef = useRef<() => void>(() => {});
+  const band = useBand(),
+    hasContent = Boolean(
+      draft.patient.name ||
+      draft.patient.age ||
+      draft.patient.sex ||
+      draft.patient.reference ||
+      draft.medications.length ||
+      draft.vitalReadingIds.length ||
+      draft.sources.length ||
+      clinicalSections.some(([key]) => draft[key]) ||
+      Object.values(draft.manualVitals).some(Boolean) ||
+      Object.values(draft.clinician).some(Boolean),
+    ),
+    dirty =
+      JSON.stringify(draft) !== lastSaved && (lastSaved !== "" || hasContent),
+    issues = reviewIssues(draft);
+  const title =
+    page === "settings"
+      ? "Workspace settings"
+      : page === "assistant"
+        ? "Clinical assistant"
+        : navigation.find(([id]) => id === page)?.[1] || "Prescription studio";
+  function notify(text: string) {
+    setNotice(text);
+    clearTimeout(noticeTimer.current);
+    noticeTimer.current = window.setTimeout(() => setNotice(""), 6000);
+  }
+  async function refresh() {
     try {
-      await client.connect(authKey);
-    } catch (error) {
-      if (bandClient.current !== client) return;
-      bandClient.current = null;
-      setPhase("error");
-      setStatusMessage(error instanceof Error ? error.message : "Could not connect to the band.");
-    }
-  };
-
-  const disconnect = async () => {
-    const client = bandClient.current;
-    bandClient.current = null;
-    await client?.disconnect();
-    setPhase("disconnected");
-    setStatusMessage("Band disconnected. Close any device chooser that is still open.");
-  };
-
-  const submitSnapshot = async (snapshot: BandSnapshot, source: Reading["source"]) => {
-    const reading: Reading = {
-      ...snapshot,
-      observedAt: snapshot.observedAt || new Date().toISOString(),
-      source,
-    };
-    setCurrent((previous) => mergeReading(previous, reading));
-    try {
-      await saveReading(reading);
-      setServerOnline(true);
-    } catch {
-      setServerOnline(false);
-      setHistory((existing) => [...existing.slice(-119), reading]);
-    }
-  };
-
-  const startDemo = async () => {
-    await disconnect();
-    stopDemo();
-    setCurrent(null);
-    setHistory([]);
-    setPhase("demo");
-    setStatusMessage("Showing generated readings so you can review the dashboard.");
-    let tick = 0;
-    const createDemoReading = () => {
-      const wave = Math.sin(tick / 2.4);
-      tick += 1;
-      void submitSnapshot(
-        {
-          deviceName: "Mi Band 5 · preview",
-          observedAt: new Date().toISOString(),
-          heartRate: Math.round(76 + wave * 8 + Math.random() * 3),
-          steps: 6842 + tick * 3,
-          distanceMeters: 4930 + tick * 2,
-          calories: 286,
-          batteryPercent: 82,
-        },
-        "demo",
+      const r = await api<{ consultations: ConsultationSummary[] }>(
+        "/api/consultations",
       );
+      setRecords(r.consultations);
+      setRecordError("");
+    } catch (e) {
+      setRecordError((e as Error).message);
+    }
+  }
+  useEffect(() => {
+    void refresh();
+    void api<Capabilities>("/api/capabilities")
+      .then(setCaps)
+      .catch(() => {});
+    return () => clearTimeout(noticeTimer.current);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE, JSON.stringify(draft));
+        setStorageError("");
+      } catch {
+        setStorageError(
+          "Browser recovery is unavailable. Save this consultation or download a draft to keep your work.",
+        );
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [draft]);
+  useEffect(() => {
+    const before = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
     };
-    createDemoReading();
-    demoTimer.current = window.setInterval(createDemoReading, 2_500);
+    window.addEventListener("beforeunload", before);
+    return () => window.removeEventListener("beforeunload", before);
+  }, [dirty]);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommand("");
+        setModal("command");
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveRef.current();
+      }
+    };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, []);
+  async function save() {
+    if (savingRef.current) return false;
+    if (!draft.patient.name.trim()) {
+      notify("Enter the patient’s name before saving.");
+      setPage("studio");
+      window.setTimeout(
+        () => document.getElementById("patient-name")?.focus(),
+        0,
+      );
+      return false;
+    }
+    savingRef.current = true;
+    setSaving(true);
+    const submitted = draft;
+    try {
+      const r = await api<{ consultation: Consultation }>(
+        `/api/consultations/${submitted.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(submitted),
+        },
+      );
+      const clean = parseConsultation(r.consultation)!;
+      setLastSaved(JSON.stringify(clean));
+      setDraft((current) =>
+        current.id === submitted.id
+          ? { ...current, revision: clean.revision }
+          : current,
+      );
+      notify("Consultation saved on this computer.");
+      void refresh();
+      return true;
+    } catch (e) {
+      notify((e as Error).message);
+      return false;
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+  saveRef.current = () => {
+    void save();
   };
-
-  const stopDemo = () => {
-    if (demoTimer.current) window.clearInterval(demoTimer.current);
-    demoTimer.current = undefined;
-    setPhase((currentPhase) => (currentPhase === "demo" ? "idle" : currentPhase));
-    setStatusMessage("Use Chrome or Edge on this PC and keep the band close.");
+  const navigate = (value: string) => {
+    setPage(value);
+    setMobile(false);
+    setModal(null);
   };
-
-  const heartRateValues = useMemo(
-    () => history.flatMap((reading) => (reading.source !== current?.source || reading.deviceName !== current?.deviceName || reading.heartRate === undefined ? [] : [reading.heartRate])).slice(-40),
-    [history, current?.source, current?.deviceName],
-  );
-  const isBusy = phase === "selecting" || phase === "connecting" || phase === "authenticating";
-  const isActive = phase === "connected";
-  const updated = current?.observedAt
-    ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(
-        new Date(current.observedAt),
-      )
-    : "Waiting for first reading";
-
+  function replace(next: ConsultationInput) {
+    if (dirty) {
+      setPending(next);
+      setModal("replace");
+    } else {
+      setDraft(next);
+      setLastSaved(next.revision ? JSON.stringify(next) : "");
+      navigate("studio");
+    }
+  }
+  const makeNew = () => {
+    const next = newConsultation();
+    next.clinician = { ...draft.clinician };
+    replace(next);
+  };
+  const open = async (id: string) => {
+    try {
+      const r = await api<{ consultation: Consultation }>(
+        `/api/consultations/${id}`,
+      );
+      replace(parseConsultation(r.consultation)!);
+    } catch (e) {
+      notify((e as Error).message);
+    }
+  };
+  const addMedicine = (product: Medicine) => {
+    if (draft.medications.length >= 40) {
+      notify("This draft has reached the 40-medicine limit.");
+      return;
+    }
+    const medicine = {
+      ...blankMedication(),
+      catalogId: product.id,
+      name: product.name,
+      generic: product.generic,
+      strength: product.strength,
+      form: product.form,
+    };
+    setDraft((d) => ({ ...d, medications: [...d.medications, medicine] }));
+    navigate("studio");
+    notify("Product added. Enter the authored dose and instructions.");
+  };
+  const exportDraft = () => {
+    download(`meddesk-${draft.date}.json`, serializeDraft(draft));
+    notify("MedDesk draft downloaded. This is a JSON workspace file.");
+  };
+  const readFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      if (file.size > 256 * 1024)
+        throw new Error("Draft imports must be smaller than 256 KB.");
+      replace(importDraft(JSON.parse(await file.text())));
+      notify(
+        "Imported as a new draft. Source files and device readings must be linked locally.",
+      );
+    } catch (e) {
+      notify((e as Error).message);
+    } finally {
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+  const assistantNavigation = (value: string) => {
+    navigate(value);
+    setAssistantOpen(false);
+  };
   return (
-    <main>
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="MedDesk home">
-          <span className="brand-mark">M</span>
-          <span>MedDesk</span>
+    <div className="app-shell">
+      <a href="#workspace" className="skip-link">
+        Skip to workspace
+      </a>
+      <aside className={`sidebar ${mobile ? "open" : ""}`}>
+        <a
+          href="#"
+          className="brand"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("studio");
+          }}
+        >
+          <span className="brand-logo">
+            m<span>+</span>
+          </span>
+          <span>
+            meddesk<span className="brand-sub">CLINICAL WORKSPACE</span>
+          </span>
         </a>
-        <div className="topbar-status">
-          <span className={`server-dot ${serverOnline ? "online" : ""}`} />
-          Local server {serverOnline ? "online" : "offline"}
-        </div>
-      </header>
-
-      <section className="hero" id="top">
-        <div>
-          <p className="eyebrow">MI BAND 5 · PRIVATE PC MONITOR</p>
-          <h1>Your pulse, closer at hand.</h1>
-          <p className="hero-copy">
-            Connect your band directly to this computer. Readings stay on your local Node server and update here in real time.
-          </p>
-        </div>
-        <div className="privacy-note">
-          <ShieldIcon />
-          <span><strong>Local by design</strong>Your auth key never leaves this browser tab.</span>
-        </div>
-      </section>
-
-      <section className="dashboard-grid">
-        <aside className="connect-panel card">
-          <div className="panel-heading">
-            <span className="step-number">01</span>
-            <div>
-              <p className="eyebrow">DEVICE ACCESS</p>
-              <h2>Connect your band</h2>
-            </div>
-          </div>
-
-          <label htmlFor="auth-key">Band auth key</label>
-          <div className="key-input">
-            <input
-              id="auth-key"
-              type={showKey ? "text" : "password"}
-              value={authKey}
-              onChange={(event) => setAuthKey(event.target.value)}
-              placeholder="0x · 32 hexadecimal characters"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <button type="button" className="text-button" onClick={() => setShowKey((visible) => !visible)}>
-              {showKey ? "Hide" : "Show"}
+        <button
+          className="practice-switch"
+          onClick={() => navigate("settings")}
+        >
+          <span className="practice-icon">
+            <Icon name="pharmacy" size={18} />
+          </span>
+          <span>
+            <strong>{draft.clinician.clinic || "My practice"}</strong>
+            <small>Local workspace</small>
+          </span>
+          <Icon name="down" size={15} />
+        </button>
+        <p className="nav-label">WORKSPACE</p>
+        <nav aria-label="Main navigation">
+          {navigation.map(([id, label, icon]) => (
+            <button
+              key={id}
+              aria-current={page === id ? "page" : undefined}
+              className={page === id ? "active" : ""}
+              onClick={() => navigate(id)}
+            >
+              <Icon name={icon} size={19} />
+              <span>{label}</span>
+              {id === "studio" && <span className="nav-dot" />}
             </button>
-          </div>
-          <p className="field-help">Use the band’s 32-character Bluetooth key. For your Xiaomi account, get-band-key.ps1 uses ACCOUNT_METHOD=xiaomi in .env. An account password is not a Bluetooth key.</p>
-          <p className="field-help" role="status">{bluetoothStatus}</p>
-
-          {phase === "connected" ? (
-            <button className="primary-button disconnect" type="button" onClick={() => void disconnect()}>
-              Disconnect band
-            </button>
-          ) : (
-            <button className="primary-button" type="button" disabled={isBusy || !MiBand5Client.isSupported() || !/^(0x)?[0-9a-f]{32}$/i.test(authKey.trim())} onClick={() => void connect()}>
-              <BluetoothIcon />
-              {isBusy ? "Connecting…" : "Connect Mi Band 5"}
-            </button>
-          )}
-          {isBusy && <button className="secondary-button" type="button" onClick={() => void disconnect()}>Cancel connection</button>}
-          <button className="secondary-button" type="button" disabled={isBusy} onClick={phase === "demo" ? stopDemo : () => void startDemo()}>
-            {phase === "demo" ? "Pause preview" : "Preview with demo data"}
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <button
+            className="assistant-launch"
+            onClick={() => setAssistantOpen(true)}
+          >
+            <Icon name="spark" />
+            <span>Clinical assistant</span>
+            <kbd>AI</kbd>
           </button>
-
-          <div className={`connection-state state-${phase}`}>
-            <span className="pulse-dot" />
-            <span><strong>{phaseLabels[phase]}</strong>{statusMessage}</span>
+          <button
+            className={`settings-link ${page === "settings" ? "active" : ""}`}
+            onClick={() => navigate("settings")}
+          >
+            <Icon name="settings" size={18} />
+            Settings
+          </button>
+          <div className="workspace-profile">
+            <span className="avatar">
+              {draft.clinician.name
+                ? draft.clinician.name.slice(0, 1).toUpperCase()
+                : "MD"}
+            </span>
+            <span>
+              <strong>{draft.clinician.name || "Your workspace"}</strong>
+              <small>
+                {draft.clinician.registration ||
+                  "Set up your prescriber profile"}
+              </small>
+            </span>
           </div>
-
-          <div className="checklist">
-            <p>Before connecting</p>
-            <div><CheckIcon /> Wear the band snugly</div>
-            <div><CheckIcon /> Release the band from the phone’s Bluetooth</div>
-            <div><CheckIcon /> Turn on Windows Bluetooth</div>
+        </div>
+      </aside>
+      {mobile && (
+        <button
+          className="nav-scrim"
+          aria-label="Close navigation"
+          onClick={() => setMobile(false)}
+        />
+      )}
+      <div className="app-body">
+        <header className="topbar">
+          <div className="breadcrumbs">
+            <button
+              className="icon-button mobile-menu"
+              aria-label="Open navigation"
+              onClick={() => setMobile(!mobile)}
+            >
+              <Icon name="menu" />
+            </button>
+            <span>Workspace</span>
+            <Icon name="chevron" size={13} />
+            <strong>{title}</strong>
           </div>
-        </aside>
-
-        <section className="vitals-panel">
-          <div className="section-title">
-            <div>
-              <p className="eyebrow">LIVE OVERVIEW</p>
-              <h2>Today at a glance</h2>
+          <div className="topbar-actions">
+            <select
+              className="role-switch"
+              aria-label="Demonstration workspace"
+              title="Changes the view; does not grant clinical authority"
+              value={role}
+              onChange={(e) => {
+                setRole(e.target.value);
+                navigate(
+                  e.target.value === "doctor"
+                    ? "studio"
+                    : e.target.value === "patient"
+                      ? "reader"
+                      : "pharmacy",
+                );
+              }}
+            >
+              <option value="doctor">Doctor view</option>
+              <option value="patient">Patient view</option>
+              <option value="pharmacy">Pharmacy view</option>
+            </select>
+            <button
+              className="command-trigger"
+              onClick={() => {
+                setCommand("");
+                setModal("command");
+              }}
+            >
+              <Icon name="search" size={16} />
+              <span>Quick actions</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <span className={`server-status ${band.online ? "online" : ""}`}>
+              <i />
+              {band.online ? "Local server online" : "Server unavailable"}
+            </span>
+            <button
+              className="icon-button"
+              aria-label="Open workspace settings"
+              onClick={() => navigate("settings")}
+            >
+              <Icon name="user" />
+            </button>
+          </div>
+        </header>
+        <main id="workspace" className={`workspace page-${page}`} tabIndex={-1}>
+          {storageError && (
+            <div className="error" role="alert">
+              {storageError}
             </div>
-            <div className={`live-badge ${isActive ? "active" : ""}`}><span />{phase === "demo" ? "DEMO" : isActive ? "CONNECTED" : "STANDBY"}</div>
+          )}
+          {draft.synthetic && (
+            <div className="example-banner">
+              <span>
+                <Icon name="info" size={16} />
+                Fictional example · not for patient use
+              </span>
+              <button onClick={makeNew}>
+                Start a real consultation <Icon name="arrow" size={15} />
+              </button>
+            </div>
+          )}
+          {page === "studio" && (
+            <Studio
+              draft={draft}
+              update={setDraft}
+              onNew={makeNew}
+              onFindPatient={() => navigate("history")}
+              onFindMedicine={() => setModal("medicine")}
+              onDevices={() => navigate("vitals")}
+              onAssistant={() => setAssistantOpen(true)}
+              onExport={exportDraft}
+              onReview={() => setModal("review")}
+              onSave={() => void save()}
+              saving={saving}
+              dirty={dirty}
+              storageError={storageError}
+            />
+          )}
+          {page === "medicine" && (
+            <>
+              <div className="page-intro">
+                <div>
+                  <Badge tone="blue">MEDICINE LIBRARY</Badge>
+                  <h1>The right product. The source in view.</h1>
+                  <p>
+                    Search local medicine information without filling in
+                    clinical decisions.
+                  </p>
+                </div>
+                <Badge>{caps?.medicineCatalog.files ?? 0} source files</Badge>
+              </div>
+              <section className="panel">
+                <MedicineLibrary
+                  count={caps?.medicineCatalog.count}
+                  onSelect={addMedicine}
+                />
+              </section>
+            </>
+          )}
+          <div hidden={page !== "import"}>
+            <ImportWorkspace
+              draft={draft}
+              onChange={setDraft}
+              notify={notify}
+            />
           </div>
-
-          <div className="metrics-grid">
-            <article className="metric-card heart-card">
-              <div className="metric-top"><HeartIcon /><span>HEART RATE</span></div>
-              <div className="metric-value">{formatMetric(current?.heartRate)} <small>BPM</small></div>
-              <p>{current?.heartRateObservedAt ? `Last measured ${new Date(current.heartRateObservedAt).toLocaleTimeString()}` : "Waiting for a live measurement"}</p>
-              <Sparkline values={heartRateValues} />
-            </article>
-
-            <article className="metric-card">
-              <div className="metric-top"><StepsIcon /><span>STEPS</span></div>
-              <div className="metric-value">{formatMetric(current?.steps)}</div>
-              <div className="progress"><span style={{ width: `${Math.min(((current?.steps ?? 0) / 10_000) * 100, 100)}%` }} /></div>
-              <p>{current?.steps ? `${Math.round((current.steps / 10_000) * 100)}% of a 10,000 step goal` : "Today’s total from the band"}</p>
-            </article>
-
-            <article className="metric-card compact">
-              <div className="metric-top"><RouteIcon /><span>DISTANCE</span></div>
-              <div className="metric-value">{formatDistance(current?.distanceMeters)} <small>KM</small></div>
-              <p>Calculated by the band</p>
-            </article>
-
-            <article className="metric-card compact">
-              <div className="metric-top"><FlameIcon /><span>ACTIVE ENERGY</span></div>
-              <div className="metric-value">{formatMetric(current?.calories)} <small>KCAL</small></div>
-              <p>Today’s estimate</p>
-            </article>
-
-            <article className="metric-card compact battery-card">
-              <div className="metric-top"><BatteryIcon /><span>BATTERY</span></div>
-              <div className="metric-value">{formatMetric(current?.batteryPercent)} <small>%</small></div>
-              <div className="battery-track"><span style={{ width: `${current?.batteryPercent ?? 0}%` }} /></div>
-            </article>
-
-            <article className="metric-card compact sleep-card">
-              <div className="metric-top"><MoonIcon /><span>SLEEP</span></div>
-              <div className="metric-value muted">— <small>HRS</small></div>
-              <p>Available after activity-history sync</p>
-            </article>
+          {page === "reader" && <ReaderWorkspace draft={draft} />}
+          {page === "history" && (
+            <>
+              {recordError && (
+                <p className="error" role="alert">
+                  {recordError}
+                </p>
+              )}
+              <HistoryWorkspace
+                items={records}
+                onOpen={(id) => void open(id)}
+                onNewVisit={(record) => {
+                  const next = newConsultation();
+                  next.patient = { ...record.patient };
+                  next.synthetic = record.synthetic;
+                  next.clinician = { ...draft.clinician };
+                  replace(next);
+                }}
+                refresh={() => void refresh()}
+              />
+            </>
+          )}
+          {page === "vitals" && (
+            <VitalsWorkspace
+              band={band}
+              draft={draft}
+              onAttach={(ids) => {
+                setDraft({
+                  ...draft,
+                  vitalReadingIds: [
+                    ...new Set([...draft.vitalReadingIds, ...ids]),
+                  ],
+                });
+                notify(
+                  "Measurement linked to this patient. Save the consultation to retain it.",
+                );
+              }}
+            />
+          )}
+          {page === "evidence" && (
+            <EvidenceWorkspace draft={draft} capabilities={caps} />
+          )}
+          {page === "pharmacy" && <PharmacyWorkspace draft={draft} />}
+          {page === "showcase" && <ShowcaseWorkspace navigate={navigate} />}
+          {page === "assistant" && (
+            <div className="assistant-page panel">
+              <Assistant draft={draft} navigate={assistantNavigation} />
+            </div>
+          )}
+          {page === "settings" && (
+            <Settings
+              draft={draft}
+              update={setDraft}
+              capabilities={caps}
+              navigate={navigate}
+              onImport={() => fileInput.current?.click()}
+              onExport={exportDraft}
+              onExample={() => replace(exampleConsultation())}
+            />
+          )}
+        </main>
+        <footer className="app-footer">
+          <span>
+            MedDesk <span>·</span> A clearer path through care
+          </span>
+          <span>
+            Local workspace <span>·</span> Unsigned drafts
+          </span>
+        </footer>
+      </div>
+      <input
+        ref={fileInput}
+        hidden
+        type="file"
+        accept=".json"
+        onChange={(e) => void readFile(e.target.files?.[0])}
+      />
+      {notice && (
+        <div className="toast" role="status">
+          <Icon name="info" size={18} />
+          <span>{notice}</span>
+          <button aria-label="Dismiss message" onClick={() => setNotice("")}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
+      {assistantOpen && (
+        <Modal
+          title="Clinical assistant"
+          onClose={() => setAssistantOpen(false)}
+        >
+          <div className="assistant-content">
+            <Assistant draft={draft} navigate={assistantNavigation} />
           </div>
-
-          <div className="last-reading">
-            <span>LAST READING</span>
-            <strong>{updated}</strong>
-            <span className="source-pill">{current?.source === "demo" ? "DEMO" : current ? "MI BAND" : "NO DATA"}</span>
+        </Modal>
+      )}
+      {modal === "medicine" && (
+        <Modal title="Find a medicine" wide onClose={() => setModal(null)}>
+          <MedicineLibrary
+            count={caps?.medicineCatalog.count}
+            onSelect={addMedicine}
+          />
+        </Modal>
+      )}
+      {modal === "review" && (
+        <Modal
+          title="Review the prescription"
+          wide
+          onClose={() => setModal(null)}
+        >
+          <div className="review-grid">
+            <div>
+              <Badge tone="amber">Unsigned draft</Badge>
+              <h3>{issues.length} authoring items to review</h3>
+              {issues.length ? (
+                <ul className="review-issues">
+                  {issues.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>
+                  Required authoring fields are present. Clinical correctness
+                  has not been automatically checked.
+                </p>
+              )}
+              <p className="helper">
+                Printing produces a draft with no digital signature. Review all
+                patient details, medicine names, doses and instructions.
+              </p>
+              <button
+                className="button primary"
+                disabled={!draft.patient.name.trim()}
+                onClick={() => {
+                  setModal(null);
+                  window.setTimeout(() => window.print(), 100);
+                }}
+              >
+                <Icon name="print" size={17} />
+                Print unsigned draft
+              </button>
+            </div>
+            <PrescriptionPaper draft={draft} />
           </div>
-        </section>
-      </section>
-
-      <footer>
-        <span>MedDesk Band Monitor</span>
-        <span>Wellness data only · not a medical device</span>
-      </footer>
-    </main>
+        </Modal>
+      )}
+      {modal === "command" && (
+        <Modal title="Quick actions" onClose={() => setModal(null)}>
+          <div className="command-menu">
+            <div className="search-box">
+              <Icon name="search" />
+              <input
+                aria-label="Search quick actions"
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                placeholder="Where would you like to go?"
+              />
+            </div>
+            {[
+              ...navigation,
+              ["assistant", "Clinical assistant", "spark"],
+              ["settings", "Workspace settings", "settings"],
+            ]
+              .filter(([, label]) =>
+                label.toLowerCase().includes(command.toLowerCase()),
+              )
+              .map(([id, label, icon]) => (
+                <button key={id} onClick={() => navigate(id)}>
+                  <Icon name={icon} />
+                  {label}
+                  <Icon name="arrow" size={16} />
+                </button>
+              ))}
+            <button onClick={makeNew}>
+              <Icon name="plus" />
+              New consultation<kbd>New</kbd>
+            </button>
+          </div>
+        </Modal>
+      )}
+      {modal === "replace" && (
+        <Modal
+          title="Keep the current draft?"
+          onClose={() => {
+            setPending(null);
+            setModal(null);
+          }}
+        >
+          <div className="panel-body">
+            <p>
+              The current consultation has unsaved changes. Download it first,
+              or replace the active workspace.
+            </p>
+            <div className="toolbar">
+              <button className="button" onClick={exportDraft}>
+                Download current draft
+              </button>
+              <button
+                className="button"
+                onClick={() => {
+                  setPending(null);
+                  setModal(null);
+                }}
+              >
+                Keep editing
+              </button>
+              <button
+                className="button primary"
+                onClick={() => {
+                  if (pending) {
+                    setDraft(pending);
+                    setLastSaved(
+                      pending.revision ? JSON.stringify(pending) : "",
+                    );
+                    setPending(null);
+                    navigate("studio");
+                  }
+                }}
+              >
+                Replace workspace
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      <div className="print-only">
+        <PrescriptionPaper draft={draft} large />
+      </div>
+    </div>
   );
 }
-
-function formatMetric(value?: number) {
-  return value === undefined ? "—" : new Intl.NumberFormat().format(value);
-}
-
-function formatDistance(value?: number) {
-  return value === undefined ? "—" : (value / 1000).toFixed(2);
-}
-
-function BluetoothIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 5 4.5-5 4.5 5 4.5-5 4.5V3Zm0 9L7.5 7.8M12 12l-4.5 4.2" /></svg>; }
-function ShieldIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 2.9 8 7 10 4.1-2 7-5.3 7-10V6l-7-3Z" /><path d="m9.3 12 1.8 1.8 3.8-4" /></svg>; }
-function CheckIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10.5 3 3L15 7" /></svg>; }
-function HeartIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.8a5.3 5.3 0 0 0-7.5 0L12 7.1l-1.3-1.3a5.3 5.3 0 1 0-7.5 7.5L12 22l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z" /></svg>; }
-function StepsIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4c1.3 2 1.2 4.1-.3 6.2-1.6 2.2-4 3.1-5.7 2.3C1.7 11.8 2 9 3.7 6.8 5.3 4.7 7.8 2.5 9 4Zm6 7c1.3 2 1.2 4.1-.3 6.2-1.6 2.2-4 3.1-5.7 2.3-1.3-.7-1-3.5.7-5.7 1.6-2.1 4.1-4.3 5.3-2.8Z" /></svg>; }
-function RouteIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2" /><circle cx="18" cy="6" r="2" /><path d="M8 18h3a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7" /></svg>; }
-function FlameIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3s1 4-2 6c-2 1.4-3 3-3 5a4 4 0 0 0 8 0c0-1.2-.4-2.5-1.2-3.7C18 12 20 15 19 18a7 7 0 0 1-13.4-4C6.3 9 10 7 13 3Z" /></svg>; }
-function BatteryIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="16" height="10" rx="2" /><path d="M21 10v4M6 10h7v4H6z" /></svg>; }
-function MoonIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" /></svg>; }

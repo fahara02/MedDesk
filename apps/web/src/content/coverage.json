@@ -1,0 +1,1188 @@
+[
+  {
+    "rank": 1,
+    "id": "U22",
+    "title": "Open one compact `.lps` prescription offline—no hospital cloud or third-party install",
+    "scenes": [
+      "S01",
+      "S08"
+    ],
+    "proof": "Open a compact file offline after app installation without requiring a hospital backend."
+  },
+  {
+    "rank": 2,
+    "id": "U02",
+    "title": "Give AI clean, annotated prescription data without OCR or retyping",
+    "scenes": [
+      "S05"
+    ],
+    "proof": "Consume native structured content with exact source references without running OCR."
+  },
+  {
+    "rank": 3,
+    "id": "U05",
+    "title": "Validate a prescription through real peer-to-peer evidence, not a central lookup",
+    "scenes": [
+      "S08",
+      "S09"
+    ],
+    "proof": "Verify challenge-bound peer evidence without substituting a central lookup success."
+  },
+  {
+    "rank": 4,
+    "id": "L12",
+    "title": "Make every P2P answer fresh, challenge-bound and portable",
+    "scenes": [
+      "S09"
+    ],
+    "proof": "Reject a replayed or wrong-challenge P2P response and retain the fresh response proof."
+  },
+  {
+    "rank": 5,
+    "id": "L01",
+    "title": "Expose fake prescriptions while keeping identity, signature, trust, licence and per-action clinical authority as separately proved facts",
+    "scenes": [
+      "S08"
+    ],
+    "proof": "Alter a file; inspect integrity, signature, trust, licence and action authority separately."
+  },
+  {
+    "rank": 6,
+    "id": "U15",
+    "title": "Keep issued prescriptions immutable while the format keeps evolving",
+    "scenes": [
+      "S08",
+      "S14"
+    ],
+    "proof": "Demonstrate format evolution while preserving prior issued bytes and verifiability limits."
+  },
+  {
+    "rank": 7,
+    "id": "X08",
+    "title": "Record every later action as a signed event; never edit the original",
+    "scenes": [
+      "S06",
+      "S07"
+    ],
+    "proof": "Append actual signed events when supported; retain and compare the unchanged base document."
+  },
+  {
+    "rank": 8,
+    "id": "X02",
+    "title": "Lock the issuer's signed truth while people and AI add new annotations",
+    "scenes": [
+      "S05",
+      "S08"
+    ],
+    "proof": "Add an AI/person annotation and prove the issued bytes and original signature are unchanged."
+  },
+  {
+    "rank": 9,
+    "id": "U03",
+    "title": "Let prescriptions identify their sibling, child and neighbour records",
+    "scenes": [
+      "S06"
+    ],
+    "proof": "Navigate sibling/child/neighbour references with exact identities and missing-reference states."
+  },
+  {
+    "rank": 10,
+    "id": "U04",
+    "title": "Create private predictable links offline and assemble the cluster when connectivity returns",
+    "scenes": [
+      "S06",
+      "S09"
+    ],
+    "proof": "Create private links offline and assemble the explicitly authorized cluster on reconnect."
+  },
+  {
+    "rank": 11,
+    "id": "L11",
+    "title": "Join visits and prescriptions into one care episode, even when written offline",
+    "scenes": [
+      "S06"
+    ],
+    "proof": "Join explicitly linked offline-created visits into an episode after reconnecting."
+  },
+  {
+    "rank": 12,
+    "id": "U16",
+    "title": "Split, package, transport and rebuild documents across bad channels",
+    "scenes": [
+      "S12"
+    ],
+    "proof": "Split/package/reassemble through interrupted transport and compare exact output bytes."
+  },
+  {
+    "rank": 13,
+    "id": "X27",
+    "title": "Stop corrupted bytes before they can become a clinical instruction",
+    "scenes": [
+      "S08"
+    ],
+    "proof": "Mutate signed/structural bytes and show rejection before an actionable instruction appears."
+  },
+  {
+    "rank": 14,
+    "id": "X28",
+    "title": "Rebuild the exact signed prescription from closed, authenticated repair pieces whose coding, symbol proofs, recipient keys and reconstruction result cannot be reinterpreted by a provider or another reader",
+    "scenes": [
+      "S12"
+    ],
+    "proof": "Reconstruct exact signed bytes from valid repair pieces; wrong coding/proof/key inputs refuse."
+  },
+  {
+    "rank": 15,
+    "id": "U19",
+    "title": "Let an open public repair mesh heal damaged prescription files",
+    "scenes": [
+      "S12"
+    ],
+    "proof": "Recover a damaged demo artifact using actual authenticated repair operations when implemented."
+  },
+  {
+    "rank": 16,
+    "id": "X30",
+    "title": "Let public repair providers offer either content-blind encrypted custody or explicitly consented, policy-bound and visibly decryptable escrow, while truthfully reporting the encryption lifetime and migration state",
+    "scenes": [
+      "S12",
+      "S09"
+    ],
+    "proof": "Distinguish blind custody from consented escrow and show actual encryption-lifetime status."
+  },
+  {
+    "rank": 17,
+    "id": "X31",
+    "title": "Prevent a CA's repair service from gaining prescription or trust-signing authority",
+    "scenes": [
+      "S08",
+      "S12"
+    ],
+    "proof": "Prove a repair-provider identity cannot authorize trust or clinical signatures."
+  },
+  {
+    "rank": 18,
+    "id": "U20",
+    "title": "Allow CA issuers to run repair nodes without granting those nodes clinical authority",
+    "scenes": [
+      "S08",
+      "S12"
+    ],
+    "proof": "Show issuer-operated repair custody without assigning it extra clinical authority."
+  },
+  {
+    "rank": 19,
+    "id": "U01",
+    "title": "Cover the whole prescription, not just the medicine list",
+    "scenes": [
+      "S01",
+      "S10"
+    ],
+    "proof": "Demonstrate patient, prescriber, diagnosis, medicine, nutrition, advice and investigation sections."
+  },
+  {
+    "rank": 20,
+    "id": "U11",
+    "title": "Serve ordinary OPD work and the full complexity of IPD care",
+    "scenes": [
+      "S01",
+      "S07",
+      "S10"
+    ],
+    "proof": "Switch between OPD and IPD specimens retaining their distinct care/state requirements."
+  },
+  {
+    "rank": 21,
+    "id": "X18",
+    "title": "Keep an ordinary outpatient prescription small despite the universal schema",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Measure an ordinary prescription artifact alongside a rich specimen using actual bytes."
+  },
+  {
+    "rank": 22,
+    "id": "X01",
+    "title": "Give every section and clinical item a stable address for AI and citation",
+    "scenes": [
+      "S05",
+      "S14"
+    ],
+    "proof": "Click a citation to the same stable source element after reopening the file."
+  },
+  {
+    "rank": 23,
+    "id": "X03",
+    "title": "Produce the same multilingual text and semantic token chunks on every conforming system",
+    "scenes": [
+      "S05",
+      "S14"
+    ],
+    "proof": "Compare rule-generated multilingual projections from the same source/contract byte for byte."
+  },
+  {
+    "rank": 24,
+    "id": "U18",
+    "title": "Support vast clinical vocabularies and stable AI tokenisation",
+    "scenes": [
+      "S05",
+      "S13"
+    ],
+    "proof": "Use versioned vocabulary/tokenizer identities with stable source-bounded retrieval."
+  },
+  {
+    "rank": 25,
+    "id": "X33",
+    "title": "Bind embeddings to the exact document, projection, model and tokenizer that produced them",
+    "scenes": [
+      "S05",
+      "S13"
+    ],
+    "proof": "Bind retrieved embeddings to exact document/projection/model/tokenizer identity and reject stale ones."
+  },
+  {
+    "rank": 26,
+    "id": "L02",
+    "title": "Carry a complete outpatient prescription outside the clinic",
+    "scenes": [
+      "S01"
+    ],
+    "proof": "Create a complete outpatient sample, download it and reopen it outside the authoring session."
+  },
+  {
+    "rank": 27,
+    "id": "L03",
+    "title": "Follow the patient through admission, bed moves and responsible teams",
+    "scenes": [
+      "S06"
+    ],
+    "proof": "Follow admission, bed/team changes and linked source records without merging identities."
+  },
+  {
+    "rank": 28,
+    "id": "L04",
+    "title": "Let a junior doctor or nurse capture the order while the doctor remains the approver",
+    "scenes": [
+      "S01",
+      "S07"
+    ],
+    "proof": "Capture an order under one role; require a separate accountable approval before issue."
+  },
+  {
+    "rank": 29,
+    "id": "L05",
+    "title": "Support draft, clarification, rejection, approval, co-signing and emergency verbal orders",
+    "scenes": [
+      "S07",
+      "S08"
+    ],
+    "proof": "Exercise draft, clarification, rejection, approval, co-sign and emergency verbal-order states."
+  },
+  {
+    "rank": 30,
+    "id": "U12",
+    "title": "Keep a recorded or dictated order as a draft until the doctor approves it",
+    "scenes": [
+      "S01"
+    ],
+    "proof": "Capture a recorded/dictated order and keep it draft until a separately accountable approval."
+  },
+  {
+    "rank": 31,
+    "id": "L07",
+    "title": "Follow pharmacy review, patient-specific or shared-batch preparation, exact released output use, stock allocation and dispensing across several pharmacies without confusing preparation, supply or administration",
+    "scenes": [
+      "S07"
+    ],
+    "proof": "Trace preparation input/output, release, allocation and multi-pharmacy supply as separate evidence."
+  },
+  {
+    "rank": 32,
+    "id": "U06",
+    "title": "Let several pharmacies fulfil different parts of one prescription safely",
+    "scenes": [
+      "S07"
+    ],
+    "proof": "Fulfil distinct prescription parts through two pharmacies and retain conflicts/history gaps."
+  },
+  {
+    "rank": 33,
+    "id": "D03",
+    "title": "Allocate and fulfil one prescription through community or hospital pharmacies",
+    "scenes": [
+      "S07"
+    ],
+    "proof": "Allocate and partially fulfil items across two pharmacies with explicit remaining quantities."
+  },
+  {
+    "rank": 34,
+    "id": "U07",
+    "title": "Represent pharmaceutical products, pharmacies and regulators in full",
+    "scenes": [
+      "S03",
+      "S07"
+    ],
+    "proof": "Inspect products, pharmacy actors and regulatory identity as separate full records."
+  },
+  {
+    "rank": 35,
+    "id": "D02",
+    "title": "Identify the exact medicine, ingredients, pack, authorization and safety information",
+    "scenes": [
+      "S03"
+    ],
+    "proof": "Resolve product/ingredient/pack/registration and display source-backed knowledge coverage."
+  },
+  {
+    "rank": 36,
+    "id": "U17",
+    "title": "Always keep the source PNG when a physical prescription becomes LPS",
+    "scenes": [
+      "S02"
+    ],
+    "proof": "Refuse a complete-transcription claim when a required canonical source page is missing."
+  },
+  {
+    "rank": 37,
+    "id": "X29",
+    "title": "Keep every scanned source page and the complete OCR/transformation trail",
+    "scenes": [
+      "S02"
+    ],
+    "proof": "Open every retained source PNG and inspect the complete recorded transformation chain."
+  },
+  {
+    "rank": 38,
+    "id": "L10",
+    "title": "Attach or point to the exact test, image or report used in the decision",
+    "scenes": [
+      "S06"
+    ],
+    "proof": "Open the precise report/image cited by an order; missing or changed bytes invalidate its association."
+  },
+  {
+    "rank": 39,
+    "id": "U10",
+    "title": "Attach and cite a test or report that already exists",
+    "scenes": [
+      "S06"
+    ],
+    "proof": "Attach or resolve an existing report and show its precise citation and digest."
+  },
+  {
+    "rank": 40,
+    "id": "X09",
+    "title": "Keep large images and attachments outside the compact clinical core while binding them by digest",
+    "scenes": [
+      "S06",
+      "S14"
+    ],
+    "proof": "Retrieve an exact digest-bound attachment while the compact CORE remains small."
+  },
+  {
+    "rank": 41,
+    "id": "U09",
+    "title": "Prescribe tests, imaging, inhalers, special medicines and CPAP settings precisely",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve exact tests/imaging/inhaler/special-medicine/CPAP settings through reader output."
+  },
+  {
+    "rank": 42,
+    "id": "D01",
+    "title": "Prescribe simple, tapered, as-needed, variable, sliding-scale and infusion medicines",
+    "scenes": [
+      "S01",
+      "S10"
+    ],
+    "proof": "Round-trip simple, taper, PRN, variable, sliding-scale and infusion authored schedules exactly."
+  },
+  {
+    "rank": 43,
+    "id": "U08",
+    "title": "Prescribe diagnosis-linked nutrition and practical advice such as bathing restrictions",
+    "scenes": [
+      "S01",
+      "S10"
+    ],
+    "proof": "Author diagnosis-linked nutrition and practical advice without automatic clinical defaults."
+  },
+  {
+    "rank": 44,
+    "id": "L08",
+    "title": "Separate what was scheduled from what was given, omitted or refused",
+    "scenes": [
+      "S07"
+    ],
+    "proof": "Compare scheduled, administered, omitted and refused doses without equating schedule with use."
+  },
+  {
+    "rank": 45,
+    "id": "L09",
+    "title": "Reconcile medicines at admission, transfer and discharge",
+    "scenes": [
+      "S06",
+      "S07"
+    ],
+    "proof": "Compare admission/transfer/discharge lists and record explicit reconciliation decisions."
+  },
+  {
+    "rank": 46,
+    "id": "L13",
+    "title": "Hand over care and issue a discharge prescription without breaking the story",
+    "scenes": [
+      "S06",
+      "S07"
+    ],
+    "proof": "Generate a discharge/handover view retaining prior decisions, changes and source links."
+  },
+  {
+    "rank": 47,
+    "id": "L14",
+    "title": "Record consent, refusal, decision-making capacity and legal authority",
+    "scenes": [
+      "S09"
+    ],
+    "proof": "Display consent, refusal, capacity and legal authority as separate reviewed facts."
+  },
+  {
+    "rank": 48,
+    "id": "X16",
+    "title": "Never claim current revocation or dispensing certainty when the reader is offline",
+    "scenes": [
+      "S08"
+    ],
+    "proof": "Disconnect and display exact cached trust age/currentness limits without claiming certainty."
+  },
+  {
+    "rank": 49,
+    "id": "X17",
+    "title": "Make every automated link or AI conclusion a traceable proposal until a person confirms it",
+    "scenes": [
+      "S05"
+    ],
+    "proof": "Require confirmation for an AI/linking proposal and retain its source and decision."
+  },
+  {
+    "rank": 50,
+    "id": "X15",
+    "title": "Link records privately without hashing demographics or creating a global patient tracking token",
+    "scenes": [
+      "S06",
+      "S09"
+    ],
+    "proof": "Link only through explicit private linkage evidence; reject demographic-only joining."
+  },
+  {
+    "rank": 51,
+    "id": "X05",
+    "title": "Show whether content came from dictation, import, a model or clinician confirmation",
+    "scenes": [
+      "S01",
+      "S02",
+      "S05"
+    ],
+    "proof": "Inspect source origin and distinguish dictation, import, model proposal and human confirmation."
+  },
+  {
+    "rank": 52,
+    "id": "X32",
+    "title": "Use SNOMED-scale and other large terminologies while retaining readable human text",
+    "scenes": [
+      "S03",
+      "S13"
+    ],
+    "proof": "Search a pinned terminology subset and retain human text when code resolution is unavailable."
+  },
+  {
+    "rank": 53,
+    "id": "X04",
+    "title": "Never split one clinical statement merely because a token window ended",
+    "scenes": [
+      "S05"
+    ],
+    "proof": "Exercise a token budget at a clinical-statement boundary without splitting its meaning."
+  },
+  {
+    "rank": 54,
+    "id": "X23",
+    "title": "Tell apart the ability to parse, preserve, display and clinically understand a document",
+    "scenes": [
+      "S08"
+    ],
+    "proof": "Show separate parse, preservation, display and clinical-understanding capability results."
+  },
+  {
+    "rank": 55,
+    "id": "X24",
+    "title": "Never silently ignore a future event that could change clinical state",
+    "scenes": [
+      "S06",
+      "S08"
+    ],
+    "proof": "Add an unsupported state-changing event and refuse a falsely determinate current projection."
+  },
+  {
+    "rank": 56,
+    "id": "X25",
+    "title": "Upgrade schemas and terminologies without rewriting an issued prescription",
+    "scenes": [
+      "S03",
+      "S14"
+    ],
+    "proof": "Change a reference/schema release without rewriting the prior issued artifact."
+  },
+  {
+    "rank": 57,
+    "id": "U21",
+    "title": "Adopt useful future semantics now instead of waiting for a standards ballot to finish",
+    "scenes": [
+      "S10",
+      "S14"
+    ],
+    "proof": "Inspect additive future semantics and their defined compatibility/refusal boundaries."
+  },
+  {
+    "rank": 58,
+    "id": "X22",
+    "title": "Make extension and mapping definitions signed, immutable and safe to resolve",
+    "scenes": [
+      "S11",
+      "S14"
+    ],
+    "proof": "Resolve an exact immutable signed definition and reject altered or unresolved definitions."
+  },
+  {
+    "rank": 59,
+    "id": "X21",
+    "title": "State exactly what an unknown extension affects and block action in that scope",
+    "scenes": [
+      "S08",
+      "S14"
+    ],
+    "proof": "Load an unknown scoped extension and show which actions refuse and which bytes survive."
+  },
+  {
+    "rank": 60,
+    "id": "X26",
+    "title": "Preserve unknown binary fields through supported round trips",
+    "scenes": [
+      "S01",
+      "S14"
+    ],
+    "proof": "Round-trip an allowed unknown binary field intact; refuse unsupported edits that would lose it."
+  },
+  {
+    "rank": 61,
+    "id": "U14",
+    "title": "Stay efficient even though the schema is exhaustive",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Measure compact versus specialty-heavy samples and retain the full schema coverage."
+  },
+  {
+    "rank": 62,
+    "id": "X06",
+    "title": "Store no empty specialty modules",
+    "scenes": [
+      "S10",
+      "S14"
+    ],
+    "proof": "Inspect serialized ordinary samples and verify absent specialty modules consume no stored fields."
+  },
+  {
+    "rank": 63,
+    "id": "X07",
+    "title": "Store repeated facts once without creating recursive document structures",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Show repeated-fact references and reject a recursive document structure."
+  },
+  {
+    "rank": 64,
+    "id": "X19",
+    "title": "Charge no extension overhead when a document uses only the base model",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Compare base-only artifact overhead and verify no unused extension payload is added."
+  },
+  {
+    "rank": 65,
+    "id": "X20",
+    "title": "Use the right governed mechanism for a field, profile, module, extension or attachment",
+    "scenes": [
+      "S10",
+      "S14"
+    ],
+    "proof": "Classify example additions by field/profile/module/extension/attachment with governing definitions."
+  },
+  {
+    "rank": 66,
+    "id": "X34",
+    "title": "Bound compression resources and never make a missing dictionary block essential content",
+    "scenes": [
+      "S08",
+      "S14"
+    ],
+    "proof": "Exercise compression limits and an absent dictionary while preserving essential-content behavior."
+  },
+  {
+    "rank": 67,
+    "id": "X10",
+    "title": "Reject documents that exceed safe memory and decoding limits before allocation",
+    "scenes": [
+      "S08",
+      "S14"
+    ],
+    "proof": "Reject over-limit compressed/decoded input with bounded memory and useful diagnostics."
+  },
+  {
+    "rank": 68,
+    "id": "X11",
+    "title": "Refuse unsafe action when a critical rule or clinical meaning is unknown",
+    "scenes": [
+      "S08"
+    ],
+    "proof": "Demonstrate unknown critical meaning causing scoped refusal rather than a permissive result."
+  },
+  {
+    "rank": 69,
+    "id": "U13",
+    "title": "Support hospital patient IDs of any real national or institutional format",
+    "scenes": [
+      "S01"
+    ],
+    "proof": "Round-trip real-world identifier shapes and issuing authorities without global tracking tokens."
+  },
+  {
+    "rank": 70,
+    "id": "X14",
+    "title": "Accept real hospital patient IDs of different lengths, alphabets and issuing authorities",
+    "scenes": [
+      "S01"
+    ],
+    "proof": "Round-trip long, Unicode and issuer-qualified patient identifiers without normalization loss."
+  },
+  {
+    "rank": 71,
+    "id": "L06",
+    "title": "Keep related orders and protocol steps together",
+    "scenes": [
+      "S06",
+      "S10"
+    ],
+    "proof": "Navigate an order group/protocol and retain exact step/dependency relationships."
+  },
+  {
+    "rank": 72,
+    "id": "D04",
+    "title": "Prescribe diet, supplements, tube feeding and intravenous nutrition",
+    "scenes": [
+      "S01",
+      "S10"
+    ],
+    "proof": "Enter diet, supplements, tube and parenteral nutrition with exact authored instructions."
+  },
+  {
+    "rank": 73,
+    "id": "D05",
+    "title": "Order laboratory and bedside tests with the right specimen and follow-on tests",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Order a specimen-specific laboratory test and link its follow-on request and result."
+  },
+  {
+    "rank": 74,
+    "id": "D06",
+    "title": "Order imaging safely and link the exact DICOM study, series or image",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Retain imaging safety inputs and exact DICOM study/series/image references."
+  },
+  {
+    "rank": 75,
+    "id": "D08",
+    "title": "Request and record procedures and interventions",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Review a procedure request, prerequisites and recorded result without inventing completion."
+  },
+  {
+    "rank": 76,
+    "id": "D12",
+    "title": "Give precise inhaler, nebulizer, oxygen, CPAP, BiPAP and ventilator instructions",
+    "scenes": [
+      "S01",
+      "S10"
+    ],
+    "proof": "Render inhaler/nebulizer/oxygen/CPAP/BiPAP/ventilator settings without lossy flattening."
+  },
+  {
+    "rank": 77,
+    "id": "D16",
+    "title": "Assign nursing observations, bedside care, hygiene, repositioning and education",
+    "scenes": [
+      "S07",
+      "S10"
+    ],
+    "proof": "Assign nursing observations/care/education and record completion separately from assignment."
+  },
+  {
+    "rank": 78,
+    "id": "D29",
+    "title": "Request referrals, consultations and multidisciplinary decisions and receive the answer",
+    "scenes": [
+      "S06",
+      "S10"
+    ],
+    "proof": "Send a local demonstration referral/request and link the separately recorded answer."
+  },
+  {
+    "rank": 79,
+    "id": "D33",
+    "title": "Run emergency triage, ABCDE resuscitation, trauma care and disposition",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Inspect triage/ABCDE/trauma/disposition states with author-entered timing and evidence."
+  },
+  {
+    "rank": 80,
+    "id": "D26",
+    "title": "Run chemotherapy, immunotherapy and cumulative-dose treatment protocols",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve cycle/protocol and cumulative-dose evidence; unresolved totals remain explicit."
+  },
+  {
+    "rank": 81,
+    "id": "D11",
+    "title": "Run ICU, HDU, NICU and PICU organ support and continuous treatment",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Inspect ICU/HDU/NICU/PICU support specimens with precise continuous-treatment settings."
+  },
+  {
+    "rank": 82,
+    "id": "D09",
+    "title": "Plan surgery from pre-operative preparation through theatre and recovery",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Navigate a surgical specimen from preparation through theatre and recovery decisions."
+  },
+  {
+    "rank": 83,
+    "id": "D10",
+    "title": "Plan anaesthesia, sedation and advanced pain control",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve anaesthesia/sedation/pain-plan fields, monitoring and author review."
+  },
+  {
+    "rank": 84,
+    "id": "D13",
+    "title": "Order, crossmatch, issue and transfuse blood products and record reactions",
+    "scenes": [
+      "S07",
+      "S10"
+    ],
+    "proof": "Follow component identity, compatibility, issue, transfusion and reaction as distinct events."
+  },
+  {
+    "rank": 85,
+    "id": "D14",
+    "title": "Prescribe fluids and follow intake, output and fluid balance",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve fluid orders and intake/output observations with exact units and time scope."
+  },
+  {
+    "rank": 86,
+    "id": "D15",
+    "title": "Manage lines, tubes, drains, catheters, stomas and wound devices",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Inspect line/tube/drain/catheter/stoma care with device identity and maintenance instructions."
+  },
+  {
+    "rank": 87,
+    "id": "D20",
+    "title": "Make paediatric and neonatal orders depend on current age, weight and body size",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Refuse an age/weight/body-size-dependent calculation with missing or stale required inputs."
+  },
+  {
+    "rank": 88,
+    "id": "D28",
+    "title": "Set isolation, infection control, antimicrobial review and public-health actions",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Show isolation/infection-control/antimicrobial-review and public-health action provenance."
+  },
+  {
+    "rank": 89,
+    "id": "D30",
+    "title": "Order, record and evaluate immunization",
+    "scenes": [
+      "S07",
+      "S10"
+    ],
+    "proof": "Separate immunization assessment, order, physical container, administration and safety report."
+  },
+  {
+    "rank": 90,
+    "id": "D17",
+    "title": "Prescribe physiotherapy, occupational therapy, speech, swallow and rehabilitation goals",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Review rehabilitation, speech/swallow and occupational goals with authored restrictions."
+  },
+  {
+    "rank": 91,
+    "id": "D18",
+    "title": "Manage antenatal care",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Navigate an antenatal specimen with pregnancy context and linked assessments."
+  },
+  {
+    "rank": 92,
+    "id": "D19",
+    "title": "Manage labour, delivery, postpartum care and the newborn record",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Keep labour/delivery/postpartum and newborn records linked without conflating subjects."
+  },
+  {
+    "rank": 93,
+    "id": "D31",
+    "title": "Arrange equipment, consumables, supplies and home-health support",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve equipment/supply/home-health request details and fulfilment status."
+  },
+  {
+    "rank": 94,
+    "id": "D32",
+    "title": "Record coverage, prior authorization, claim decisions and funding blockers",
+    "scenes": [
+      "S10",
+      "S07"
+    ],
+    "proof": "Display coverage/prior-authorization/funding decisions separately from clinical eligibility."
+  },
+  {
+    "rank": 95,
+    "id": "D48",
+    "title": "Review polypharmacy, medicine appropriateness and deprescribing decisions",
+    "scenes": [
+      "S03",
+      "S05",
+      "S07"
+    ],
+    "proof": "Compare polypharmacy evidence and explicit deprescribing decisions with cited sources."
+  },
+  {
+    "rank": 96,
+    "id": "D49",
+    "title": "Coordinate services around social, access and benefits barriers",
+    "scenes": [
+      "S10",
+      "S09"
+    ],
+    "proof": "Record social/access/benefit barriers and scoped coordination without leaking private data."
+  },
+  {
+    "rank": 97,
+    "id": "D34",
+    "title": "Manage symptoms, goals, directives and family support in palliative and end-of-life care",
+    "scenes": [
+      "S10",
+      "S09"
+    ],
+    "proof": "Preserve palliative goals/directives/symptom plans and family-support information."
+  },
+  {
+    "rank": 98,
+    "id": "D35",
+    "title": "Assess frailty, function, falls, cognition and delirium in older patients",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Show frailty/function/falls/cognition/delirium observations with source and time context."
+  },
+  {
+    "rank": 99,
+    "id": "D36",
+    "title": "Assess and treat wounds, pressure injuries and burns with linked measurements and images",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Bind wound/burn/pressure-injury measurements to the exact referenced images."
+  },
+  {
+    "rank": 100,
+    "id": "D39",
+    "title": "Set diabetes targets, insulin plans, device use and emergency rules",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Retain diabetes targets, insulin/device plans and authored emergency conditions exactly."
+  },
+  {
+    "rank": 101,
+    "id": "D23",
+    "title": "Order ECG, telemetry, cardiac devices and cardiac procedures",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Link ECG/telemetry/device/procedure requests and actual results without inferring completion."
+  },
+  {
+    "rank": 102,
+    "id": "D24",
+    "title": "Manage stroke, seizure and neurological monitoring",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Show neurological monitoring and stroke/seizure instructions with exact authored conditions."
+  },
+  {
+    "rank": 103,
+    "id": "D25",
+    "title": "Prescribe haemodialysis, peritoneal dialysis and other renal replacement therapy",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Inspect haemodialysis/peritoneal/renal-replacement parameters and monitoring requirements."
+  },
+  {
+    "rank": 104,
+    "id": "D27",
+    "title": "Manage mental-health care, observation, capacity, legal status and exceptional restrictions",
+    "scenes": [
+      "S10",
+      "S09"
+    ],
+    "proof": "Separate mental-health treatment, observation, capacity, legal status and restrictions."
+  },
+  {
+    "rank": 105,
+    "id": "D47",
+    "title": "Coordinate cancer characterization, systemic therapy, radiation, cell therapy and response",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Navigate cancer characterization, therapies and response across linked records."
+  },
+  {
+    "rank": 106,
+    "id": "D07",
+    "title": "Order and record pathology and genomic investigations",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Round-trip pathology/genomic investigation requests and their exact evidence references."
+  },
+  {
+    "rank": 107,
+    "id": "D42",
+    "title": "Follow transplant listing, donor match, graft status and immunosuppression",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Link transplant listing, donor matching, graft state and treatment without inferring compatibility."
+  },
+  {
+    "rank": 108,
+    "id": "D43",
+    "title": "Run allergy testing, challenge, desensitization and emergency action plans",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Separate allergy testing, challenge, desensitization and emergency-plan evidence."
+  },
+  {
+    "rank": 109,
+    "id": "D44",
+    "title": "Record poisoning exposure and act on poison-centre, decontamination and antidote advice",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve exposure and poison-centre advice provenance; do not derive an antidote from free text."
+  },
+  {
+    "rank": 110,
+    "id": "D46",
+    "title": "Manage injury, reduction, immobilisation and weight-bearing restrictions",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Keep injury site, reduction, immobilisation and weight-bearing restrictions exact."
+  },
+  {
+    "rank": 111,
+    "id": "D40",
+    "title": "Manage liver, bowel, endoscopy, stoma and fistula care",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Inspect hepatic/bowel/endoscopy/stoma/fistula specimens and their linked evidence."
+  },
+  {
+    "rank": 112,
+    "id": "D41",
+    "title": "Manage urinary catheters, irrigation, voiding and stone pathways",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve catheter/irrigation/voiding/stone-pathway steps and exact instructions."
+  },
+  {
+    "rank": 113,
+    "id": "D45",
+    "title": "Track rheumatology activity, organ involvement and high-risk therapy monitoring",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Link rheumatology activity/organ involvement to monitoring and reviewed treatment plans."
+  },
+  {
+    "rank": 114,
+    "id": "D37",
+    "title": "Record skin findings, body distribution, images and dermatology treatment",
+    "scenes": [
+      "S10",
+      "S06"
+    ],
+    "proof": "Retain dermatology findings, body distribution, images and treatment associations."
+  },
+  {
+    "rank": 115,
+    "id": "D38",
+    "title": "Manage ear, nose, throat, hearing, balance, voice and swallowing care",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Preserve ENT/hearing/balance/voice/swallow fields and authored care instructions."
+  },
+  {
+    "rank": 116,
+    "id": "D21",
+    "title": "Prescribe and record eye and vision care",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Retain eye/laterality/vision-specific examination and treatment fields through round trip."
+  },
+  {
+    "rank": 117,
+    "id": "D22",
+    "title": "Prescribe and record dental and oral care",
+    "scenes": [
+      "S10"
+    ],
+    "proof": "Retain dental site/tooth/oral-care details and procedure references."
+  },
+  {
+    "rank": 118,
+    "id": "X12",
+    "title": "Keep written and machine schema in descriptor-level agreement: keys, types, cardinality, requiredness, enums, unions, wire form, stage, vocabulary and invariants—not names alone",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Expose a real schema/descriptor parity report and a retained seeded mismatch failure."
+  },
+  {
+    "rank": 119,
+    "id": "X13",
+    "title": "Automatically catch broken type references, ambiguous choices and duplicated ownership",
+    "scenes": [
+      "S14"
+    ],
+    "proof": "Show actual gate rejection for broken references, ambiguous choices and duplicate ownership."
+  },
+  {
+    "rank": 120,
+    "id": "X35",
+    "title": "Upload, finalize, retrieve, audit, rotate and logically delete public repair custody through one compact key-bound protocol whose anonymous target-bound bootstrap can recover its private RMAN/AUTH/KENV bundle without exposing plaintext authority, scanning unrelated keys or turning provider claims into clinical/deletion truth",
+    "scenes": [
+      "S12"
+    ],
+    "proof": "Exercise bounded upload/finalize/retrieve/audit/rotate/delete and target-bound repair bootstrap."
+  },
+  {
+    "rank": 121,
+    "id": "X36",
+    "title": "Turn a scan into an auditable transcription only when every source-derived signed field is bound to exact source evidence and accountable human review; model confidence can prioritize work but never silently approve it",
+    "scenes": [
+      "S02"
+    ],
+    "proof": "Require reviewed source evidence for every transcribed signed field, regardless of model confidence."
+  },
+  {
+    "rank": 122,
+    "id": "X37",
+    "title": "Converse in the exact Bangladesh FHIR R4 grammar at the migration edge while keeping LPS CORE universal and compact: preserve separate ICD-11/ICD-10 assertions and provenance; keep LPS L2 product identity distinct from DGDA L3; fail closed on moving terminology, a missing bridge or missing national facts; and never relabel profile validation as SHR workflow acceptance",
+    "scenes": [
+      "S11"
+    ],
+    "proof": "Show exact Bangladesh R4 conversion/loss evidence and distinct ICD/DGDA/native identities."
+  },
+  {
+    "rank": 123,
+    "id": "X38",
+    "title": "Present the minimum authorized disclosure to an authenticated verifier without calling possession, a device tap, key control or transport ACK patient consent: bind the exact purpose/request/view, keep subject and presenter roles separate, and require independently valid legal-consent evidence where policy demands it",
+    "scenes": [
+      "S09"
+    ],
+    "proof": "Bind recipient, purpose, request and disclosed view; missing required consent evidence refuses."
+  },
+  {
+    "rank": 124,
+    "id": "X39",
+    "title": "Exchange a new order, change, cancellation, renewal, pharmacy transfer or dispense notice without confusing byte delivery with business or clinical effect: bind the exact recipient, request and retry state, and require independently authorized LPS document/event evidence for every accepted clinical action while external workflow grammar stays at the edge",
+    "scenes": [
+      "S07",
+      "S09"
+    ],
+    "proof": "Separate delivery/retry/business response from independently authorized clinical event effects."
+  },
+  {
+    "rank": 125,
+    "id": "X40",
+    "title": "Keep medication reference data universal and compact: store only accepted patient-specific facts and the authored product snapshot in CORE; put source-backed L1–L4 identity/registration/pack/equivalence in signed `lps-drugdb/1` and source/dependency/coverage/assertion/predicate/conflict/action knowledge in separate signed `lps-medication-knowledge/1`; preserve tri-state/unknown/out-of-coverage outcomes; keep ATC, formulary policy and physical-instance evidence separate; and refuse inferred identity, substitution, safety or prescriber intent while external grammar stays in adapters",
+    "scenes": [
+      "S03",
+      "S13"
+    ],
+    "proof": "Separate compact authored snapshot, L1-L4 identity and knowledge releases with explicit unknown/conflict states."
+  }
+]

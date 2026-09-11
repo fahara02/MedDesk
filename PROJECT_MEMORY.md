@@ -1,154 +1,99 @@
 # MedDesk project state
 
-This file records the implementation state needed to continue the project on another computer. Credentials, the Mi Band authentication key, and collected health readings are deliberately excluded from Git.
+Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separate
+native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
+edited for this delivery.
 
-## What is implemented
+## Current direction
 
-- A React and Vite dashboard connects directly to a Xiaomi Mi Band 5 through Chrome or Edge Web Bluetooth.
-- The browser performs the Huami authentication-key handshake and reads continuous heart rate, steps, distance, calories, and battery.
-- An Express server validates readings, appends them to `data/readings.jsonl`, serves the production dashboard, and broadcasts updates with server-sent events.
-- The dashboard includes demo data so the UI and server can be checked without a band.
-- `get-band-key.ps1` wraps the vendored `huami-token` utility without putting the account password on the command line.
+The owner requested a full doctor-facing React workspace, then prioritized
+verified physical Mi Band readings. The latest requirement is **server-owned
+Bluetooth polling every 10 seconds, distributed to React through SSE**. The
+browser must not own the band connection or receive the key. Do not call saved
+measurements live. Battery is device status, not human health.
 
-## Important decisions
+The owner subsequently paired the band through **Zepp**, superseding the earlier
+Xiaomi account route. `.env` contains EMAIL, ZEPP_PASSWORD, BLUETOOTH_ADDRESS and
+the working key under `Key`. Gmail's PASSWORD and XIAOMI_PASSWORD are separate;
+never fall back between provider passwords. Do not print or commit credentials.
+The current key was verified against the Zepp-returned key for the configured
+address, and Windows GATT authentication succeeded on the physical band.
 
-- The browser owns the monitoring connection. The Node.js server stores and distributes readings; it does not open Bluetooth itself. A separate Windows battery reader can perform a one-shot native Bluetooth read.
-- The owner uses an existing Xiaomi account whose email address is Gmail. Do not
-  require a new Amazfit/Zepp account. The bundled extractor has a Xiaomi
-  email/password route using `ACCOUNT_METHOD=xiaomi`; whether that route returns
-  this particular band's key must be verified. A Gmail browser session does not
-  authenticate the extractor, and the supplied password must belong to Xiaomi.
-- The 16-byte band auth key stays in the browser tab and is never posted to the server.
-- Do not unpair or factory-reset the band after extracting its key because that invalidates the key.
-- Sleep history is not implemented because it requires proprietary activity-history synchronization and classification.
+## Implemented
 
-## Continue on the Bluetooth laptop
+- React doctor workspace: consultation authoring, exact dose text, Bangla,
+  unsigned print, JSON import/export, source-file review, medicine identity
+  search, revision history, local completeness check and capability coverage.
+- Server validation and atomic consultation/source persistence; optimistic
+  revision conflicts retain the user's draft. Real observations require explicit
+  patient assignment and cannot be attached to fictional consultations.
+- Windows PowerShell/WinRT band helper launched and controlled by Node. Auth
+  writes must use WriteWithoutResponse when the characteristic requires it;
+  WriteWithResponse produced ATT error 6 on the physical band.
+- Continuous heart-rate notifications, with the latest new notification emitted
+  on each 10-second tick retaining its original device-notification timestamp.
+  Activity totals and device battery are read every 10 seconds. GATT work is
+  serial and can delay a tick; it never overlaps polls or manufactures a pulse.
+- `GET /api/events` broadcasts persisted readings and collector state. React
+  uses EventSource, refreshes history on reconnect, deduplicates IDs, closes the
+  subscription on unmount and marks readings stale after 25 seconds. Multiple
+  tabs share one collector. Closing a tab does not stop monitoring.
+- POST `/api/band/start` returns 202 immediately. POST `/api/band/stop` sends a
+  graceful stop to the helper and releases the band. Duplicate start returns
+  409. Errors stop the collector and require a user retry. A no-output watchdog
+  prevents an indefinitely stuck helper. Slow SSE subscribers are disconnected.
+- Sleep history is fetched separately through Zepp's account API using Node,
+  with no new Python service. GET `/api/sleep` and POST `/api/sleep/sync` expose
+  the saved result and an explicit refresh. The actual query at
+  2026-09-11T20:19:37Z returned **zero source days and zero sleep records** for
+  the preceding seven days. Show unavailable, not zero sleep. Direct Bluetooth
+  sleep-history sync/classification is still absent.
 
-Install Node.js 22 or newer, Git, current Chrome or Edge, Python, and `uv`. Then run:
+## Running local application
 
-```powershell
-git clone https://github.com/fahara02/MedDesk.git
-cd MedDesk
-npm ci
-Copy-Item .env.example .env
-```
+The updated server runs at **http://localhost:8789/#vitals**, PID 23460 at the
+time of this update. Monitoring started at 2026-09-11T20:30:56Z; recheck status
+before reporting that it remains active. The configured default remains 8787.
 
-Fill `.env` with the existing Xiaomi account as described in `PAIRING.md`, then extract the key:
+Older servers occupy 8787 (PID 9976) and 8788 (PID 10500). An automatic policy
+review rejected a combined stop/restart command for the old server without a
+detailed reason. A separate port was used without killing it. The collector on
+8788 was gracefully stopped through its API before starting 8789; only the
+8789 server should own Bluetooth. Do not run parallel diagnostic collectors.
 
-```powershell
-.\get-band-key.ps1
-```
+## Verification and limits
 
-For development, run `npm run dev` and open `http://127.0.0.1:5173`. For the production build, run:
+The physical SSE-to-React DOM test passed, receiving at least three distinct
+heart-rate events and three activity updates while displaying LIVE. A separate
+read of actual persisted activity timestamps found intervals of 10170, 9986,
+9861 and 10081 ms. These checks did not post synthetic readings to the server.
 
-```powershell
-npm run build
-npm start
-```
+Type checking and production build pass. Unit tests cover exact consultation
+data, revision conflicts, source retention, band auth/cleanup, SSE React
+reconnection/deduplication/staleness and sleep missingness. The HTTP integration
+test uses an isolated temporary data directory and checks two SSE subscribers,
+reconnect history and persistence across restart. The opt-in live React DOM
+test connects read-only to the real server using `MEDDESK_LIVE_URL`. Its
+fetch-stream adapter avoids mixing Node and jsdom Event classes.
 
-Then open `http://localhost:8787`, disable the phone's Bluetooth temporarily, paste the auth key, and click **Connect Mi Band 5**. The browser must be allowed to open its device chooser.
+The existing browser-control runtime listed no connected browsers; no visual
+browser QA has been claimed. DOM tests are not visual browser inspection.
 
-## Last known state
+Native `.lps` read/write, OCR, provider AI, neural speech, signatures, authority
+checks and pharmacy transactions remain unconnected. The 125-row showcase
+coverage inventory is a product mapping, not the native 95-task completion
+ledger. Never imply that printing/exporting JSON produces a signed `.lps`.
+This is a single-user local demo without multiuser authentication or encrypted
+clinical storage, not a completed clinical deployment.
 
-- Type checking, unit tests, and production builds passed on the original PC.
-- The local API, file persistence, and event stream were exercised successfully.
-- Physical Mi Band testing remained pending because the original PC exposed no Bluetooth radio to Windows even though Bluetooth services and inbox drivers were present.
-- On the laptop, first confirm Windows shows a Bluetooth toggle and Chrome or Edge can open the Web Bluetooth chooser. Continue with the troubleshooting section in `PAIRING.md` if the band is not listed.
+## Working rules
 
-## Current continuation — 12 September 2026, E:\MedDesk
+Preserve local changes and the owner's `.env`. Only the main session writes
+tests; do not wake the paused native lanes. All milestone commits must use sole
+author and committer **fahara02 <idea3d.faruk@gmail.com>**, without coauthors or
+push. Keep `.env`, all `data/`, `tmp/`, keys, tokens, readings and local build
+outputs out of Git. `apps/web/src/content/coverage.json` is intentional source.
 
-- Windows now exposes a Realtek Bluetooth Adapter and a Microsoft Bluetooth LE
-  Enumerator, both status OK. The original no-radio finding no longer describes
-  this machine. Physical Mi Band authentication and real readings remain unverified.
-- Dependencies were installed from the lockfile. No `.env` or band auth key was
-  present when this continuation started. Enter the key only into the local app;
-  never request it in chat or commit it.
-- Connection attempts now clean up after rejection, cancellation, discovery
-  failure, timeout and link loss. All GATT work is serialized; periodic polling
-  schedules the next request only after the previous one completes.
-- Summary packets no longer resend an old heart rate with a fresh timestamp.
-  The display retains the heart rate's actual observation time. Demo data has a
-  DEMO overview badge. No automatic resting-range interpretation is displayed.
-- Regression tests use a simulated GATT device and the known AES test vector;
-  these prove the client state handling, not physical device compatibility.
-- Browser automation found no connected browser; Chrome is installed but was
-  stopped and lacked the ChatGPT extension. Manual Chrome/Edge use remains possible.
-- The full objective remains a doctor-facing app with prescription writing, AI
-  interaction and patient vitals. The current app is still the band monitor;
-  prescribing, patient/encounter attribution and the AI workflow remain to build
-  after the first physical band connection. Do not mark the full objective complete.
-- Validation in this continuation: 17 browser-client unit tests and two server
-  tests pass; the TypeScript/Vite production build passes. The built server was
-  started on port 8787 and `/api/health` returned `ok: true`; `/` returned HTTP 200.
-  Recheck the process and endpoint on resume. No physical reading has been claimed.
-
-## Security notes
-
-- Never commit `.env`, a band auth key, `data/readings.jsonl`, or account credentials.
-- The vendored `huami-token` logging was adjusted so authentication payloads containing credentials or tokens are not written to debug logs.
-- Rotate any account password or access token that has previously appeared in terminal or chat output.
-
-## Account correction — 12 September 2026
-
-The owner clarified that Xiaomi is the existing account pipeline and supplied
-`.env`. Its method was still `amazfit`; only that entry was changed to `xiaomi`,
-preserving the other entries. The bundled extractor's environment was installed
-with `uv sync --frozen --no-dev`. No new Python implementation was written.
-The owner clarified that PASSWORD belongs to Gmail and XIAOMI_PASSWORD belongs
-to Xiaomi. The wrapper now requires XIAOMI_PASSWORD and maps it into only the
-extractor child process; it never falls back to Gmail's PASSWORD. The actual
-`.env` credentials were preserved. The dashboard now says Band auth key instead
-of Zepp auth key.
-The extractor's help command now runs successfully and lists both account methods.
-The entire bundled README and ten-page `miband5_maruf.pdf` were read: README's
-Xiaomi login section uses `--method xiaomi`; PDF pages 2-5 describe the separate
-Zepp Life / `--method amazfit` route. Neither document establishes that signing
-into Gmail supplies a Xiaomi session or Bluetooth key. PDF page 8's seven UUIDs
-match the corresponding addresses in MedDesk's protocol module.
-
-`uv run --no-sync --project huami-token huami-token --help` succeeds using the
-owner's existing installation. A Xiaomi login attempt reached the provider but
-the extractor stopped with "Missing ssecurity or location in auth response".
-A one-shot integration check confirmed HTTP 200, response code 0, no ssecurity
-or location, and a notificationUrl on https://account.xiaomi.com. The private
-verification link is saved in ignored `tmp/xiaomi-verification-url.txt`; the
-owner must complete that interactive step before retrying. This is not evidence
-that a band key was returned or that Bluetooth authentication succeeded.
-No further login retries should run while that verification is pending.
-
-Credential-routing checks passed for distinct provider passwords, exact quoted
-password preservation, absence of passwords in process arguments, refusal when
-XIAOMI_PASSWORD is missing, and refusal of an alternate account method. The
-wrapper also supports `-CheckConfiguration` without making a network request.
-
-Consultation-model, consultation-storage and medicine-catalog modules remain
-uncommitted work from before this clarification. They are not wired into the
-running app. Resume them after the current band/account step; preserve the added
-medicine CSVs and the associated dependency changes.
-
-## Physical Bluetooth check and initial setup
-
-The owner supplied BLUETOOTH_ADDRESS in `.env`. A direct Windows Bluetooth LE
-check using that address opened Mi Smart Band 5 with Paired=true and
-Connection=Connected, and discovered 12 services. Uncached custom and standard
-battery reads returned the same valid percentage. Real battery observations were
-saved through `/api/readings`; their values and timestamps remain in ignored
-`data/readings.jsonl`. Activity reads returned
-ATT protocol error 2; no heart-rate notification was received. A subsequent
-notification-subscription attempt failed before any measurement-start command.
-All native probe processes have exited; no continuous monitor was started.
-
-The owner then confirmed the band itself still displays "Pair first" and is in
-its initial setup mode. Windows pairing is not proof of completed band setup or
-application authentication. Pause measurement attempts until that first setup
-is complete. Xiaomi documents phone-app binding with on-band confirmation:
-https://www.mi.com/sg/support/faq/details/KA-07045/ . Ask for the actual phone OS
-and companion app before giving app-specific instructions. Keep the existing
-Xiaomi identity; do not require a new account based on the band brand.
-
-`read-band-battery.ps1` uses BLUETOOTH_ADDRESS and Windows PowerShell's native
-Bluetooth API to read only the standard battery percentage. `-SaveToServer`
-posts that real sample to the local MedDesk server. It performs no band writes,
-initialization, authentication, or heart-rate measurement and uses no account
-password. The helper was run successfully with `-SaveToServer` against the
-physical band. The experimental probes and raw responses remain under ignored tmp/.
+Run `npm test`, `npm run build`, `npm run test:integration`, and the credential
+routing check after relevant changes. Keep the active collector running for the
+owner, unless stopping it is necessary for a verified replacement or requested.

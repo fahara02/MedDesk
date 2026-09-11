@@ -61,6 +61,16 @@ afterEach(() => {
 });
 
 describe("Mi Band connection lifetime", () => {
+  it("uses writes without response when the authentication characteristic requires them", async () => {
+    const f = fixture();
+    const writeWithoutResponse = vi.fn(async () => f.auth.notify([0x10, 0x03, 0x01]));
+    Object.assign(f.auth, { properties: { write: false, writeWithoutResponse: true }, writeValueWithoutResponse: writeWithoutResponse });
+    f.auth.writeValue.mockRejectedValue(new Error('ATT 6: write request unsupported'));
+    await f.client.connect(KEY);
+    expect(writeWithoutResponse).toHaveBeenCalledWith(Uint8Array.from([0x02, 0x00]));
+    expect(f.auth.writeValue).not.toHaveBeenCalled();
+    await f.client.disconnect();
+  });
   it("writes the encrypted challenge response before starting measurements", async () => {
     const f = fixture();
     f.auth.writeValue.mockImplementation(async (payload) => {

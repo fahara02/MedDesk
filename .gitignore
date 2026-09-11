@@ -1,6 +1,7 @@
 node_modules/
 apps/*/dist/
 data/*.jsonl
+data/clinic/
 tmp/
 .env
 *.log
@@ -10,3 +11,4 @@ tmp/
 __pycache__/
 *.py[cod]
 .git.saved/
+data

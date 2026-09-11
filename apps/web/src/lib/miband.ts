@@ -11,6 +11,12 @@ import {
 const HEART_RATE_KEEPALIVE_MS = 12_000;
 const SUMMARY_REFRESH_MS = 15_000;
 
+function writeBandValue(characteristic: BluetoothRemoteGATTCharacteristic, value: BufferSource) {
+  if (characteristic.properties?.writeWithoutResponse && typeof characteristic.writeValueWithoutResponse === 'function') return characteristic.writeValueWithoutResponse(value);
+  if (characteristic.properties?.write && typeof characteristic.writeValueWithResponse === 'function') return characteristic.writeValueWithResponse(value);
+  return characteristic.writeValue(value);
+}
+
 interface Callbacks {
   onPhase: (phase: ConnectionPhase, message?: string) => void;
   onSnapshot: (snapshot: BandSnapshot) => void;
@@ -130,7 +136,7 @@ export class MiBand5Client {
             const payload = new Uint8Array(18);
             payload.set([0x03, 0x00]);
             payload.set(response, 2);
-            await this.run(session, () => auth.writeValue(payload));
+            await this.run(session, () => writeBandValue(auth, payload));
           } else if (command[0] === 0x10 && command[1] === 0x03 && command[2] === 0x01) {
             finish();
           } else if (command[0] === 0x10 && (command[1] === 0x03 || command[1] === 0x02)) {
@@ -143,7 +149,7 @@ export class MiBand5Client {
 
       auth.addEventListener("characteristicvaluechanged", handleAuth);
       session.abort.signal.addEventListener("abort", cancelled, { once: true });
-      void this.run(session, () => auth.writeValue(Uint8Array.from([0x02, 0x00])))
+      void this.run(session, () => writeBandValue(auth, Uint8Array.from([0x02, 0x00])))
         .catch((error: unknown) => finish(error instanceof Error ? error : new Error("Could not start authentication.")));
     });
   }
@@ -155,11 +161,11 @@ export class MiBand5Client {
 
     const control = this.heartRateControl;
     const measurement = this.heartRateMeasurement;
-    await this.run(session, () => control.writeValue(Uint8Array.from([0x15, 0x02, 0x00])));
-    await this.run(session, () => control.writeValue(Uint8Array.from([0x15, 0x01, 0x00])));
+    await this.run(session, () => writeBandValue(control, Uint8Array.from([0x15, 0x02, 0x00])));
+    await this.run(session, () => writeBandValue(control, Uint8Array.from([0x15, 0x01, 0x00])));
     measurement.addEventListener("characteristicvaluechanged", this.handleHeartRate);
     await this.run(session, () => measurement.startNotifications());
-    await this.run(session, () => control.writeValue(Uint8Array.from([0x15, 0x01, 0x01])));
+    await this.run(session, () => writeBandValue(control, Uint8Array.from([0x15, 0x01, 0x01])));
 
     await this.refreshSummary(session);
     this.keepAliveTimer = window.setTimeout(() => {
@@ -205,7 +211,7 @@ export class MiBand5Client {
       this.assertActive(session);
       if (kind === "heartbeat") {
         const control = this.heartRateControl!;
-        await this.run(session, () => control.writeValue(Uint8Array.from([0x16])));
+        await this.run(session, () => writeBandValue(control, Uint8Array.from([0x16])));
         this.keepAliveTimer = window.setTimeout(() => void this.poll(session, kind), HEART_RATE_KEEPALIVE_MS);
       } else {
         await this.refreshSummary(session);

@@ -3,7 +3,8 @@ interface SparklineProps {
 }
 
 export function Sparkline({ values }: SparklineProps) {
-  const usableValues = values.length > 1 ? values : [values[0] ?? 72, values[0] ?? 72];
+  if (!values.length) return null;
+  const usableValues = values.length > 1 ? values : [values[0], values[0]];
   const minimum = Math.min(...usableValues) - 5;
   const maximum = Math.max(...usableValues) + 5;
   const range = Math.max(maximum - minimum, 1);

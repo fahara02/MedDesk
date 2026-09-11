@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import type { BandReading } from "./reading.js";
 
 const MAX_MEMORY_READINGS = 2_000;
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const defaultDataFile = path.join(repositoryRoot, "data", "readings.jsonl");
 
 export class ReadingStore {
@@ -37,16 +40,20 @@ export class ReadingStore {
   }
 
   async add(reading: BandReading) {
-    this.readings.push(reading);
-    this.readings = this.readings.slice(-MAX_MEMORY_READINGS);
-
-    this.writeQueue = this.writeQueue.then(() =>
-      appendFile(this.dataFile, `${JSON.stringify(reading)}\n`, "utf8"),
-    );
-    await this.writeQueue;
+    const result = this.writeQueue.then(async () => {
+      await appendFile(this.dataFile, `${JSON.stringify(reading)}\n`, "utf8");
+      this.readings.push(reading);
+      this.readings = this.readings.slice(-MAX_MEMORY_READINGS);
+    });
+    this.writeQueue = result.catch(() => {});
+    await result;
   }
 
   latest(limit: number) {
     return this.readings.slice(-limit);
+  }
+
+  get(id: string) {
+    return this.readings.find((reading) => reading.id === id);
   }
 }

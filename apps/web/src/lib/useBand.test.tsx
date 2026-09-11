@@ -113,6 +113,45 @@ it("subscribes once, preserves observation times, catches up after reconnect, an
   expect(Stream.latest.close).toHaveBeenCalledOnce();
 });
 
+it("selects one desktop, closes the previous stream, and ignores other computers", async () => {
+  const { result } = renderHook(() => useBand());
+  await waitFor(() => expect(result.current.native).not.toBeNull());
+  const old = Stream.latest;
+  status = { ...status, bridgeId: "room-one" };
+  act(() => result.current.selectBridge("room-one"));
+  await waitFor(() => expect(result.current.native?.bridgeId).toBe("room-one"));
+  expect(old.close).toHaveBeenCalledOnce();
+  expect(Stream.latest.url).toBe("/api/events?bridgeId=room-one");
+  const reading: Reading = {
+    id: "desktop-pulse",
+    source: "band",
+    heartRate: 75,
+    observedAt: new Date(Date.now() - 120_000).toISOString(),
+    bridgeId: "room-one",
+  };
+  act(() => {
+    Stream.latest.emit("reading", {
+      ...reading,
+      id: "other",
+      bridgeId: "room-two",
+    });
+    Stream.latest.emit("band-status", {
+      ...status,
+      bridgeId: "room-two",
+      running: false,
+    });
+    Stream.latest.emit("reading", reading);
+    Stream.latest.emit("reading", reading);
+  });
+  expect(result.current.readings).toEqual([reading]);
+  expect(result.current.native?.running).toBe(true);
+  await act(() => result.current.stopNative());
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/band/stop?bridgeId=room-one",
+    expect.objectContaining({ method: "POST" }),
+  );
+});
+
 it("routes controls only to the server and rejects an older status snapshot", async () => {
   const { result } = renderHook(() => useBand());
   await waitFor(() => expect(result.current.native?.running).toBe(true));

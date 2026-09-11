@@ -43,6 +43,8 @@ $Started = $false
 $Authenticated = $false
 $HeartCount = 0
 $Failure = $false
+$BandMutex = $null
+$OwnsBandMutex = $false
 $StopTask = if ($ControlStdin) { [BandValueQueue]::StopCommand() } else { $null }
 
 function Emit-Status([string]$Phase, [string]$Message) { @{ event='status'; phase=$Phase; message=$Message } | ConvertTo-Json -Compress }
@@ -97,17 +99,26 @@ function Emit-Reading($Metrics, [string]$ObservedAt) {
 }
 try {
     $Configuration = @{}
-    foreach ($Line in [IO.File]::ReadAllLines((Join-Path $PSScriptRoot '.env'))) {
+    $EnvironmentFile = Join-Path $PSScriptRoot '.env'
+    $EnvironmentLines = if (Test-Path -LiteralPath $EnvironmentFile) { [IO.File]::ReadAllLines($EnvironmentFile) } else { @() }
+    foreach ($Line in $EnvironmentLines) {
         if ($Line -match '^\s*(BLUETOOTH_ADDRESS|Key|BAND_AUTH_KEY|AUTH_KEY)\s*=(.*)$') {
             $Field = $Matches[1]; $Value = $Matches[2].Trim()
             if ($Value.Length -ge 2 -and (($Value[0] -eq '"' -and $Value[-1] -eq '"') -or ($Value[0] -eq "'" -and $Value[-1] -eq "'"))) { $Value = $Value.Substring(1, $Value.Length - 2) }
             $Configuration[$Field] = $Value
         }
     }
+    foreach ($Field in @('BLUETOOTH_ADDRESS','BAND_AUTH_KEY')) {
+        $ProcessValue = [Environment]::GetEnvironmentVariable($Field, 'Process')
+        if ($ProcessValue) { $Configuration[$Field] = $ProcessValue }
+    }
     $Address = $Configuration['BLUETOOTH_ADDRESS'] -replace '[:-]', ''
     $KeyText = @($Configuration['BAND_AUTH_KEY'], $Configuration['AUTH_KEY'], $Configuration['Key'] | Where-Object { $_ }) | Select-Object -First 1
     $KeyText = $KeyText -replace '^0[xX]', ''
     if ($Address -notmatch '^[0-9a-fA-F]{12}$' -or $KeyText -notmatch '^[0-9a-fA-F]{32}$') { throw 'Set BLUETOOTH_ADDRESS and a valid 16-byte Key in the local .env file.' }
+    $BandMutex = New-Object Threading.Mutex($false, ('Local\MedDeskBluetooth-' + $Address.ToUpperInvariant()))
+    try { $OwnsBandMutex = $BandMutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $OwnsBandMutex = $true }
+    if (-not $OwnsBandMutex) { throw 'Another MedDesk process is already monitoring this band. Stop it before connecting this bridge.' }
     [byte[]]$KeyBytes = for ($Index=0; $Index -lt 32; $Index+=2) { [Convert]::ToByte($KeyText.Substring($Index,2),16) }
     Emit-Status 'connecting' 'Opening the configured band through Windows Bluetooth.'
     $Band = Await-Band ([Windows.Devices.Bluetooth.BluetoothLEDevice]::FromBluetoothAddressAsync([Convert]::ToUInt64($Address,16))) ([Windows.Devices.Bluetooth.BluetoothLEDevice])
@@ -210,5 +221,7 @@ try {
     foreach ($Service in $Services) { try { $Service.Dispose() } catch {} }
     if ($null -ne $Band) { $Band.Dispose() }
     if ($null -ne $KeyBytes) { [Array]::Clear($KeyBytes,0,$KeyBytes.Length) }
+    if ($OwnsBandMutex) { $BandMutex.ReleaseMutex() }
+    if ($null -ne $BandMutex) { $BandMutex.Dispose() }
 }
 if ($Failure) { exit 1 }

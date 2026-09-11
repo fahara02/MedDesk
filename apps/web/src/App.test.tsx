@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
   within,
+  act,
 } from "@testing-library/react";
 import App from "./App";
 import { importDraft, newConsultation, blankMedication } from "./lib/clinic";
@@ -16,6 +17,21 @@ let records: Record<string, any>;
 beforeEach(() => {
   records = {};
   localStorage.clear();
+  Object.defineProperty(Range.prototype, "getClientRects", {
+    configurable: true,
+    value: () => [],
+  });
+  Object.defineProperty(Range.prototype, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+    }),
+  });
   vi.stubGlobal(
     "EventSource",
     class extends EventTarget {
@@ -73,30 +89,85 @@ beforeEach(() => {
     }),
   );
 });
+
+function fieldElement(field: string) {
+  const element = screen
+    .getByRole("textbox", { name: "Prescription document" })
+    .querySelector(`[data-record-field="${field}"] .record-value`);
+  if (!element) throw new Error(`Document field not found: ${field}`);
+  return element;
+}
+async function writeField(field: string, value: string) {
+  await act(async () => {
+    const element = fieldElement(field);
+    element.textContent = value;
+    fireEvent.input(element);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
+}
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
 
 describe("doctor workspace", () => {
+  it("keeps a real table and placed signature when saving an authored document", async () => {
+    render(<App />);
+    await writeField("patient.name", "Synthetic document integration");
+    await writeField("clinician.name", "Synthetic prescriber");
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    expect(
+      screen
+        .getByRole("textbox", { name: "Prescription document" })
+        .querySelector("table"),
+    ).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Sign" }));
+    const base64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==";
+    const file = new File(
+      [Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))],
+      "test-signature.png",
+      { type: "image/png" },
+    );
+    fireEvent.change(screen.getByLabelText("Upload image"), {
+      target: { files: [file] },
+    });
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("button", { name: "Place signature at cursor" })
+          .hasAttribute("disabled"),
+      ).toBe(false),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Place signature at cursor" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
+    await waitFor(() => expect(Object.values(records)).toHaveLength(1));
+    const saved = Object.values(records)[0];
+    expect(saved.patient.name).toBe("Synthetic document integration");
+    expect(saved.clinician.name).toBe("Synthetic prescriber");
+    expect(
+      saved.document.content.some((node: any) => node.type === "table"),
+    ).toBe(true);
+    expect(
+      saved.document.content.some((node: any) => node.type === "signature"),
+    ).toBe(true);
+    expect(
+      saved.document.content.filter(
+        (node: any) => node.attrs?.field === "patient.name",
+      ),
+    ).toHaveLength(1);
+  });
   it("authors exact medication text, saves, navigates, and reopens the visit", async () => {
     render(<App />);
-    const workspace = screen.getByRole("main");
-    fireEvent.change(within(workspace).getByLabelText("Patient name"), {
-      target: { value: "Synthetic UI test" },
-    });
+    await writeField("patient.name", "Synthetic UI test");
     fireEvent.click(
       screen.getByRole("button", { name: "Add a medicine manually" }),
     );
-    fireEvent.change(screen.getByLabelText("Medicine name"), {
-      target: { value: "Test product" },
-    });
-    fireEvent.change(screen.getByLabelText("Dose"), {
-      target: { value: "0.500 mg" },
-    });
-    fireEvent.change(screen.getByLabelText("Frequency"), {
-      target: { value: "প্রতিদিন" },
-    });
+    await writeField("name", "Test product");
+    await writeField("dose", "0.500 mg");
+    await writeField("frequency", "প্রতিদিন");
     fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
     await waitFor(() => expect(Object.values(records)).toHaveLength(1));
     expect(Object.values(records)[0].medications[0].dose).toBe("0.500 mg");
@@ -106,18 +177,14 @@ describe("doctor workspace", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     await waitFor(() =>
-      expect(screen.getByLabelText("Dose")).toHaveProperty("value", "0.500 mg"),
+      expect(fieldElement("dose").textContent).toBe("0.500 mg"),
     );
-    expect(screen.getByLabelText("Frequency")).toHaveProperty(
-      "value",
-      "প্রতিদিন",
-    );
+    expect(fieldElement("frequency").textContent).toBe("প্রতিদিন");
+    expect(Object.values(records)[0].document.type).toBe("doc");
   });
   it("retains edits while navigating and exposes the complete product inventory", async () => {
     render(<App />);
-    fireEvent.change(screen.getByLabelText("Patient name"), {
-      target: { value: "Retained patient" },
-    });
+    await writeField("patient.name", "Retained patient");
     fireEvent.click(screen.getByRole("button", { name: "Product showcase" }));
     expect(coverage).toHaveLength(125);
     expect(new Set(coverage.map((r) => r.id)).size).toBe(125);
@@ -129,10 +196,7 @@ describe("doctor workspace", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Prescription studio" }),
     );
-    expect(screen.getByLabelText("Patient name")).toHaveProperty(
-      "value",
-      "Retained patient",
-    );
+    expect(fieldElement("patient.name").textContent).toBe("Retained patient");
   });
   it("opens the command menu with the keyboard and closes it with Escape", () => {
     render(<App />);
@@ -155,7 +219,7 @@ describe("doctor workspace", () => {
       within(dialog).getByText("Allergy information has not been recorded."),
     ).toBeTruthy();
     expect(
-      within(dialog).getByRole("button", { name: /Send question/ }),
+      within(dialog).getByRole("button", { name: "Ask Qwen" }),
     ).toHaveProperty("disabled", true);
   });
   it("imports exact drafts as new records without importing measurement or artifact authority", () => {

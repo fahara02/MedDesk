@@ -1,0 +1,24 @@
+medesk.lifeplusbd.tech {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+    }
+    @desktop {
+        method POST
+        path /api/bridge/enroll /api/bridge/uplink
+    }
+    handle @desktop {
+        reverse_proxy app:8787
+    }
+    handle {
+        basic_auth {
+            {$MEDDESK_LOGIN_USER} {$MEDDESK_PASSWORD_HASH}
+        }
+        reverse_proxy app:8787 {
+            header_up X-MedDesk-Proxy {$MEDDESK_PROXY_SECRET}
+            flush_interval -1
+        }
+    }
+}

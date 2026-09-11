@@ -38,6 +38,7 @@ test(
           ...process.env,
           PORT: String(port),
           MEDDESK_DATA_DIR: directory,
+          MEDDESK_LUNA_ENV: path.join(directory, "missing-provider.env"),
         },
         windowsHide: true,
         stdio: ["ignore", "pipe", "pipe"],

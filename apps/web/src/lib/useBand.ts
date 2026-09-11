@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadReadings } from "./api";
 import { api } from "./clinic";
 import type { Reading } from "../types";
@@ -16,17 +16,28 @@ export function useBand() {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [online, setOnline] = useState(false);
   const [native, setNative] = useState<NativeBandStatus | null>(null);
+  const [bridgeId, setBridgeId] = useState("");
+  const selected = useRef(bridgeId);
+  selected.current = bridgeId;
   const acceptStatus = (value: NativeBandStatus) =>
     setNative((previous) =>
-      !previous || value.updatedAt >= previous.updatedAt ? value : previous,
+      (value.bridgeId || "") !== selected.current
+        ? previous
+        : !previous || value.updatedAt >= previous.updatedAt
+          ? value
+          : previous,
     );
   useEffect(() => {
     let active = true;
+    setNative(null);
+    setReadings([]);
+    setOnline(false);
+    const query = bridgeId ? "?bridgeId=" + encodeURIComponent(bridgeId) : "";
     const refresh = async () => {
       try {
         const [items, status] = await Promise.all([
-          loadReadings(),
-          api<NativeBandStatus>("/api/band/status"),
+          loadReadings(120, bridgeId),
+          api<NativeBandStatus>("/api/band/status" + query),
         ]);
         if (active) {
           setReadings((previous) => mergeReadings(previous, items));
@@ -37,7 +48,7 @@ export function useBand() {
       }
     };
     void refresh();
-    const events = new EventSource("/api/events");
+    const events = new EventSource("/api/events" + query);
     events.addEventListener("ready", () => {
       if (active) {
         setOnline(true);
@@ -48,6 +59,7 @@ export function useBand() {
       if (!active) return;
       try {
         const item = JSON.parse((event as MessageEvent).data) as Reading;
+        if ((item.bridgeId || "") !== bridgeId) return;
         setReadings((previous) => mergeReadings(previous, [item]));
         setOnline(true);
       } catch {
@@ -57,7 +69,10 @@ export function useBand() {
     events.addEventListener("band-status", (event) => {
       if (!active) return;
       try {
-        acceptStatus(JSON.parse((event as MessageEvent).data));
+        const status = JSON.parse(
+          (event as MessageEvent).data,
+        ) as NativeBandStatus;
+        if ((status.bridgeId || "") === bridgeId) acceptStatus(status);
       } catch {
         setOnline(false);
       }
@@ -69,15 +84,18 @@ export function useBand() {
       active = false;
       events.close();
     };
-  }, []);
+  }, [bridgeId]);
   const command = async (name: "start" | "stop") => {
     try {
       acceptStatus(
-        await api<NativeBandStatus>(`/api/band/${name}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-        }),
+        await api<NativeBandStatus>(
+          `/api/band/${name}${bridgeId ? "?bridgeId=" + encodeURIComponent(bridgeId) : ""}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          },
+        ),
       );
     } catch (error) {
       setNative((previous) =>
@@ -91,6 +109,8 @@ export function useBand() {
     readings,
     online,
     native,
+    bridgeId,
+    selectBridge: setBridgeId,
     startNative: () => command("start"),
     stopNative: () => command("stop"),
   };

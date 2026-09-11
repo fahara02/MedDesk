@@ -1,4 +1,5 @@
 import type { ConsultationInput } from "../lib/clinic";
+import { DocumentPreview } from "./DocumentPreview";
 
 export function PrescriptionPaper({
   draft,
@@ -7,6 +8,10 @@ export function PrescriptionPaper({
   draft: ConsultationInput;
   large?: boolean;
 }) {
+  if (draft.document)
+    return (
+      <DocumentPreview document={draft.document} synthetic={draft.synthetic} />
+    );
   const sections = [
     ["complaints", "Presenting complaints"],
     ["history", "Clinical history"],

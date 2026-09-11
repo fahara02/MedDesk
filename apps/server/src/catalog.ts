@@ -68,18 +68,26 @@ export class MedicineCatalog {
           if (this.rows.size + imported.length >= 50_000)
             throw new Error("Catalog row limit exceeded.");
           const sourceText: Record<string, string> = {};
+          const descriptionText =
+            row["Description JSON"] || row.Description || "{}";
           try {
-            const description: unknown = JSON.parse(row.Description || "{}");
+            const description: unknown = JSON.parse(descriptionText);
             if (
               description &&
               typeof description === "object" &&
               !Array.isArray(description)
             ) {
-              for (const [key, value] of Object.entries(description))
+              const retain = (value: unknown, key: string, depth: number) => {
                 if (typeof value === "string") sourceText[key] = value;
+                else if (value && typeof value === "object" && depth < 5)
+                  for (const [nested, item] of Object.entries(value))
+                    retain(item, `${key}.${nested}`, depth + 1);
+              };
+              for (const [key, value] of Object.entries(description))
+                retain(value, key, 0);
             }
           } catch {
-            sourceText["Unparsed source text"] = row.Description || "";
+            sourceText["Unparsed source text"] = descriptionText;
           }
           let url = "";
           try {
@@ -152,5 +160,9 @@ export class MedicineCatalog {
 
   get(id: string) {
     return this.rows.get(id);
+  }
+
+  entries() {
+    return this.rows.values();
   }
 }

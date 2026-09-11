@@ -14,6 +14,7 @@ export interface Reading {
   receivedAt?: string;
   source: "band" | "demo";
   deviceName?: string;
+  bridgeId?: string;
   heartRate?: number;
   steps?: number;
   distanceMeters?: number;

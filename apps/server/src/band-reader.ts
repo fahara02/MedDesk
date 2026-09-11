@@ -13,6 +13,7 @@ export interface NativeBandStatus {
   pollIntervalMs: number;
   lastReadingAt?: string;
   startedAt?: string;
+  bridgeId?: string;
 }
 
 export class WindowsBandReader {

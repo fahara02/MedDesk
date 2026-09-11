@@ -6,6 +6,7 @@ export interface BandReading {
   receivedAt: string;
   source: ReadingSource;
   deviceName?: string;
+  bridgeId?: string;
   heartRate?: number;
   steps?: number;
   distanceMeters?: number;
@@ -28,7 +29,10 @@ export function parseReading(input: unknown): IncomingReading | null {
 
   const body = input as Record<string, unknown>;
   if (body.source !== "band" && body.source !== "demo") return null;
-  if (typeof body.observedAt !== "string" || Number.isNaN(Date.parse(body.observedAt))) {
+  if (
+    typeof body.observedAt !== "string" ||
+    Number.isNaN(Date.parse(body.observedAt))
+  ) {
     return null;
   }
 
@@ -45,7 +49,12 @@ export function parseReading(input: unknown): IncomingReading | null {
   for (const [name, [minimum, maximum]] of Object.entries(numericRanges)) {
     const value = body[name];
     if (value === undefined) continue;
-    if (typeof value !== "number" || !Number.isFinite(value) || value < minimum || value > maximum) {
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value < minimum ||
+      value > maximum
+    ) {
       return null;
     }
     reading[name as keyof typeof numericRanges] = Math.round(value);

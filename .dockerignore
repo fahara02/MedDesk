@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+.git
+.env
+data
+tmp
+huami-token
+.venv
+*.pdf
+*.log
+deploy/*.env

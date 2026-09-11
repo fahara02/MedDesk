@@ -1,4 +1,6 @@
 import type { BandReading } from "./reading.js";
+import { parseDocument, type DocumentNode } from "./document-model.js";
+import { sameProjection } from "./document-projection.js";
 
 export interface Patient {
   id: string;
@@ -24,6 +26,7 @@ export interface MedicationOrder {
 }
 
 export interface ConsultationInput {
+  document?: DocumentNode;
   id: string;
   revision: number;
   patient: Patient;
@@ -185,6 +188,9 @@ export function parseConsultation(
     manualVitals[field] = (manual[field] as string) ?? "";
   }
   const sources: ConsultationInput["sources"] = [];
+  const document =
+    input.document === undefined ? undefined : parseDocument(input.document);
+  if (document === null) return null;
   if (input.sources !== undefined) {
     if (!Array.isArray(input.sources) || input.sources.length > 20) return null;
     for (const source of input.sources) {
@@ -217,7 +223,8 @@ export function parseConsultation(
       });
     }
   }
-  return {
+  const result: ConsultationInput = {
+    ...(document ? { document } : {}),
     id: input.id,
     revision: input.revision as number,
     patient: {
@@ -248,4 +255,7 @@ export function parseConsultation(
     manualVitals,
     sources,
   };
+  return result.document && !sameProjection(result, result.document)
+    ? null
+    : result;
 }

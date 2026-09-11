@@ -1,5 +1,9 @@
 # MedDesk doctor workspace
 
+Latest studio and bridge status: [delivery matrix](PROGRESS.md).
+Remote deployment and Windows installer: [deployment guide](deploy/README.md).
+The updated local instance is at `http://localhost:8790/`.
+
 A local React and Node.js workspace for prescription drafting, source review,
 consultation history and real Mi Band 5 observations.
 
@@ -69,8 +73,10 @@ sleep rather than inventing a duration. See [PAIRING.md](PAIRING.md) for setup.
 - Attach selected real band observations to an identified visit explicitly.
 - Inspect source hashes, local completeness checks and capability coverage.
 
-Native `.lps` reading/writing, OCR, provider AI, neural speech, cryptographic
-signatures and pharmacy transactions are **not connected**. The coverage page
+Native `.lps` reading/writing, OCR, cryptographic signatures and pharmacy
+transactions are **not connected**. The new rich editor supports image signature
+placement and Windows TTS. Qwen/RAG is wired, but provider calls currently fail
+under the account's free-tier-only quota restriction. The coverage page
 maps the broader plan; it is not a claim that those capabilities are complete.
 Prescription JSON export and printing do not produce a signed `.lps` file.
 

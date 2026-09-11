@@ -20,6 +20,7 @@ import type { useBand } from "../lib/useBand";
 import coverage from "../content/coverage.json";
 import { Sparkline } from "./Sparkline";
 import { SleepHistoryPanel } from "./SleepHistoryPanel";
+import { DesktopBridges } from "./DesktopBridges";
 
 export function ImportWorkspace({
   draft,
@@ -847,9 +848,9 @@ export function VitalsWorkspace({
                   {band.native.message}
                 </p>
                 <p className="helper">
-                  The server reads Bluetooth every 10 seconds and streams
-                  updates to this page. Monitoring continues when you close the
-                  browser, until you stop it.
+                  The connected computer reads Bluetooth every 10 seconds and
+                  streams updates to this page. Monitoring continues when you
+                  close the browser, until you stop it.
                 </p>
                 <div className="device-battery">
                   <Icon name="battery" size={17} />
@@ -869,10 +870,11 @@ export function VitalsWorkspace({
             </Badge>
             {band.native && !band.native.available && (
               <p className="notice">
-                Start the server on the Windows computer paired with your band
-                to enable monitoring.
+                Select an enrolled Windows computer below, then start
+                monitoring.
               </p>
             )}
+            <DesktopBridges band={band} />
           </div>
         </section>
         <section className="panel">

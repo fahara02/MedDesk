@@ -6,10 +6,14 @@ edited for this delivery.
 
 ## Current direction
 
-The owner requested a full doctor-facing React workspace, then prioritized
-verified physical Mi Band readings. The latest requirement is **server-owned
-Bluetooth polling every 10 seconds, distributed to React through SSE**. The
-browser must not own the band connection or receive the key. Do not call saved
+The active goal is a full-width prescription document editor with side tools,
+TTS, LUNA-backed Qwen assistance, drug retrieval, signature placement and genuine
+`.lps` saving. The owner also requested deployment to `72.62.69.41` as
+`medesk.lifeplusbd.tech` and an installable Windows Bluetooth forwarding daemon.
+Preserve both requirements. Native export and working Qwen calls remain unfinished.
+
+Collection remains server/desktop-owned every ten seconds, with React using SSE.
+The browser must not own Bluetooth or receive the band key. Do not call saved
 measurements live. Battery is device status, not human health.
 
 The owner subsequently paired the band through **Zepp**, superseding the earlier
@@ -51,15 +55,17 @@ address, and Windows GATT authentication succeeded on the physical band.
 
 ## Running local application
 
-The updated server runs at **http://localhost:8789/#vitals**, PID 23460 at the
-time of this update. Monitoring started at 2026-09-11T20:30:56Z; recheck status
-before reporting that it remains active. The configured default remains 8787.
+The updated studio runs at **http://localhost:8790/** and vitals at
+**http://localhost:8790/#vitals**, PID 16728 at this update. The physical SSE-to-React
+test passed after gracefully handing Bluetooth over from 8789. Recheck status
+before claiming monitoring remains active. The configured default remains 8787.
 
 Older servers occupy 8787 (PID 9976) and 8788 (PID 10500). An automatic policy
 review rejected a combined stop/restart command for the old server without a
 detailed reason. A separate port was used without killing it. The collector on
-8788 was gracefully stopped through its API before starting 8789; only the
-8789 server should own Bluetooth. Do not run parallel diagnostic collectors.
+8788 and 8789 were gracefully stopped through their APIs; only 8790 should own
+Bluetooth. Do not run parallel diagnostic collectors. New collector code also
+uses a per-band Windows mutex to reject simultaneous instances.
 
 ## Verification and limits
 
@@ -79,12 +85,55 @@ fetch-stream adapter avoids mixing Node and jsdom Event classes.
 The existing browser-control runtime listed no connected browsers; no visual
 browser QA has been claimed. DOM tests are not visual browser inspection.
 
-Native `.lps` read/write, OCR, provider AI, neural speech, signatures, authority
-checks and pharmacy transactions remain unconnected. The 125-row showcase
+Native `.lps` read/write, OCR, cryptographic signatures, authority checks and
+pharmacy transactions remain unconnected. Qwen and Windows TTS adapters now exist,
+with provider limits documented below. The 125-row showcase
 coverage inventory is a product mapping, not the native 95-task completion
 ledger. Never imply that printing/exporting JSON produces a signed `.lps`.
-This is a single-user local demo without multiuser authentication or encrypted
-clinical storage, not a completed clinical deployment.
+This remains a single-workspace demo, not a completed clinical deployment.
+
+## September 12 studio and desktop bridge milestone
+
+- Tiptap replaces the form-based studio: full canvas, tools, rich text, tables,
+  exact medication strings, Bangla, image signatures and matching print preview.
+  Structured values are projected from the document. Contradictions, malformed
+  structures and duplicate field identities are refused. Table/signature insertion
+  retains patient fields; image signing is not certificate-backed signing.
+- All **9,763 products in 14 CSVs** are indexed with zero import issues. Import
+  handles `Description` and `Description JSON` columns and nested text. Actual
+  retrieval returned eight nonempty source excerpts. Sources remain unverified.
+- The standard LUNA Qwen endpoint returned 403 `AllocationQuota.FreeTierOnly` for
+  configured chat and flash models. No paid settings were changed; do not silently
+  fall back to Token Plan. Windows speech generated a real WAV. Only English
+  desktop voices were present; Bengali requires a suitable voice. Linux hosting
+  does not provide Windows speech; browser voices are an available alternative.
+- `releases/MedDesk-Bridge-Setup.exe` bundles Node and the WinRT collector. Per-user
+  setup includes tray controls and login startup; DPAPI protects enrollment token
+  and band key. Queue files have restricted permissions, not encryption. Durable
+  bounded queue, stable retry IDs, backoff, remote commands, revocation and per-PC
+  dashboard selection are implemented. Enrollment isolates queues by device ID.
+- The actual Windows daemon TLS test used a synthetic collector: initial upload
+  failure retained the reading, retry kept its identity/timestamp, acknowledgment
+  drained the queue and a remote stop stopped collection. Not physical remote QA.
+- `deploy/` contains Docker/Caddy HTTPS configuration with dashboard basic login
+  and separate authenticated bridge routes. Node also checks an internal proxy
+  secret in remote mode. Domain A lookup returns **72.62.69.41**. The supplied
+  public SSH key matches `C:/Users/FHR/.ssh/id_ed25519_newage`; never print it.
+  **SSH username is still missing. Nothing has been deployed or changed on that
+  server.** Compose structure validates, but Docker is stopped locally; the
+  container and Caddy have not been run.
+- `releases/meddesk-server.tar.gz` contains allowlisted source and installer files,
+  excluding `.env`, credentials and clinical data. Drug CSV seeding is separate.
+- Verification: 14 server tests, 28 web tests, two HTTP integration tests, Windows
+  daemon TLS test, physical 8790 React/SSE test, build/type checks and credential
+  routing pass. Installer extraction check passes; fresh-PC GUI installation and
+  visual browser QA remain unverified. Browser discovery found no connection.
+
+Native `.lps` evidence: declarations exist, but public implementations of
+`lpsw_validate`, `lpsw_check_compat` and `lpsw_authorize` are absent. Emission requires
+validated, signed, authorized state. Do not bypass this using private compact/test
+seams or disguise JSON as `.lps`. No native files were edited. The broader goal
+remains active; `PROGRESS.md` records each requested outcome separately.
 
 ## Working rules
 

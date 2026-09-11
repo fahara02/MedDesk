@@ -9,6 +9,12 @@ import { MedicineCatalog } from "./catalog.js";
 import { ArtifactStore } from "./artifacts.js";
 import { WindowsBandReader } from "./band-reader.js";
 import { SleepStore } from "./sleep.js";
+import { DrugIndex } from "./drug-index.js";
+import { PrescriptionAssistant } from "./assistant.js";
+import { SpeechService } from "./speech.js";
+import { BridgeRegistry } from "./bridge-registry.js";
+import { remoteAccess } from "./remote-access.js";
+import { mkdir } from "node:fs/promises";
 
 const port = Number(process.env.PORT) || 8787;
 const app = express();
@@ -21,10 +27,25 @@ const clinic = new ConsultationStore(
   path.join(dataDirectory, "clinic", "consultations"),
 );
 const catalog = new MedicineCatalog(dataDirectory);
+const drugIndex = new DrugIndex(path.join(dataDirectory, "medicines.sqlite"));
+const assistant = new PrescriptionAssistant(
+  process.env.MEDDESK_LUNA_ENV || "E:/Projects/LabaidAi-LUNA/.env",
+  drugIndex,
+);
+const speech = new SpeechService(
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../../synthesize-speech.ps1",
+  ),
+);
 const artifacts = new ArtifactStore(
   path.join(dataDirectory, "clinic", "artifacts"),
 );
 const eventClients = new Set<Response>();
+await mkdir(dataDirectory, { recursive: true });
+const bridges = new BridgeRegistry(path.join(dataDirectory, "bridges.sqlite"));
+const bandStatus = (id: unknown) =>
+  typeof id === "string" && id ? bridges.status(id) : bandReader.status();
 const sleep = new SleepStore(
   path.join(dataDirectory, "health"),
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.env"),
@@ -44,10 +65,18 @@ const bandReader = new WindowsBandReader(
 );
 
 app.disable("x-powered-by");
-app.use(express.json({ limit: "256kb" }));
+app.use(
+  remoteAccess(
+    process.env.MEDDESK_PUBLIC_ORIGIN,
+    process.env.MEDDESK_PROXY_SECRET,
+  ),
+);
+app.use(express.json({ limit: "1mb" }));
 app.use((_request, response, next) => {
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader("Referrer-Policy", "no-referrer");
+  response.setHeader("Cache-Control", "no-store");
+  response.setHeader("X-Frame-Options", "DENY");
   next();
 });
 
@@ -58,23 +87,114 @@ app.get("/api/capabilities", (_request, response) =>
     medicineCatalog: catalog.status(),
     nativeLps: false,
     ocr: false,
-    assistant: false,
+    assistant: assistant.status().configured,
+    assistantDetails: assistant.status(),
     neuralSpeech: false,
+    speech: speech.status().available,
     signatures: false,
     pharmacyEvents: false,
-    mode: "local-workspace",
+    mode: process.env.MEDDESK_PUBLIC_ORIGIN
+      ? "remote-workspace"
+      : "local-workspace",
+    desktopBridge: true,
     windowsBandRead: bandReader.status().available,
   }),
 );
-app.get("/api/band/status", (_request, response) =>
-  response.json(bandReader.status()),
+app.get("/api/assistant/status", (_request, response) =>
+  response.json(assistant.status()),
 );
-app.post("/api/band/start", (_request, response) =>
-  response.status(202).json(bandReader.start()),
+app.get("/api/speech/voices", (_request, response) =>
+  response.json(speech.status()),
 );
-app.post("/api/band/stop", async (_request, response) =>
-  response.json(await bandReader.stop()),
+app.post("/api/speech", async (request, response) => {
+  const controller = new AbortController();
+  response.once("close", () => {
+    if (!response.writableEnded) controller.abort();
+  });
+  const result = await speech.synthesize(request.body, controller.signal);
+  response
+    .set({
+      "Content-Type": "audio/wav",
+      "Cache-Control": "no-store",
+      "X-Text-SHA256": result.hash,
+    })
+    .send(result.audio);
+});
+app.get("/api/medicines/retrieve", (request, response) =>
+  response.json({
+    sources: drugIndex.search(String(request.query.q || "").slice(0, 2000)),
+    index: drugIndex.status(),
+  }),
 );
+app.post("/api/assistant/ask", async (request, response) => {
+  const controller = new AbortController();
+  response.once("close", () => {
+    if (!response.writableEnded) controller.abort();
+  });
+  response.json(await assistant.ask(request.body, controller.signal));
+});
+app.get("/api/band/status", (request, response) =>
+  response.json(bandStatus(request.query.bridgeId)),
+);
+app.post("/api/band/start", (request, response) =>
+  response
+    .status(202)
+    .json(
+      typeof request.query.bridgeId === "string" && request.query.bridgeId
+        ? bridges.command(request.query.bridgeId, true)
+        : bandReader.start(),
+    ),
+);
+app.post("/api/band/stop", async (request, response) =>
+  response.json(
+    typeof request.query.bridgeId === "string" && request.query.bridgeId
+      ? bridges.command(request.query.bridgeId, false)
+      : await bandReader.stop(),
+  ),
+);
+app.get("/api/bridge/devices", (_request, response) =>
+  response.json({ devices: bridges.devices() }),
+);
+app.get("/downloads/MedDesk-Bridge-Setup.exe", (_request, response) => {
+  response.download(
+    path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../../../releases/MedDesk-Bridge-Setup.exe",
+    ),
+    "MedDesk-Bridge-Setup.exe",
+    (error) => {
+      if (error && !response.headersSent)
+        response
+          .status(404)
+          .json({
+            error:
+              "The desktop installer has not been packaged on this server yet.",
+          });
+    },
+  );
+});
+app.post("/api/bridge/invites", (request, response) =>
+  response.status(201).json(bridges.invite(request.body?.label)),
+);
+app.post("/api/bridge/enroll", (request, response) =>
+  response.status(201).json(bridges.enroll(request.body?.code)),
+);
+app.delete("/api/bridge/devices/:id", (request, response) => {
+  bridges.revoke(request.params.id);
+  response.json({ revoked: true });
+});
+app.post("/api/bridge/uplink", (request, response) => {
+  const id = bridges.authenticate(request.get("Authorization"));
+  const result = bridges.receive(id, request.body);
+  for (const reading of bridges.pending()) {
+    publish(reading);
+    bridges.published(reading.id);
+  }
+  broadcast(
+    `event: band-status\ndata: ${JSON.stringify(bridges.status(id))}\n\n`,
+  );
+  response.json(result);
+});
 app.get("/api/sleep", async (_request, response) =>
   response.json(await sleep.get()),
 );
@@ -106,7 +226,10 @@ app.put("/api/consultations/:id", async (request, response) => {
         400,
       );
   response.json({
-    consultation: await clinic.save(input, (id) => store.get(id)),
+    consultation: await clinic.save(
+      input,
+      (id) => store.get(id) || bridges.get(id),
+    ),
   });
 });
 app.get("/api/medicines/search", (request, response) =>
@@ -153,10 +276,16 @@ app.get("/api/readings", (request, response) => {
   const limit = Number.isFinite(requested)
     ? Math.min(Math.max(Math.round(requested), 1), 500)
     : 120;
-  response.json({ readings: store.latest(limit) });
+  response.json({
+    readings:
+      typeof request.query.bridgeId === "string" && request.query.bridgeId
+        ? bridges.latest(request.query.bridgeId, limit)
+        : store.latest(limit),
+  });
 });
 
-app.get("/api/events", (_request, response) => {
+app.get("/api/events", (request, response) => {
+  const status = bandStatus(request.query.bridgeId);
   response.set({
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive",
@@ -165,9 +294,7 @@ app.get("/api/events", (_request, response) => {
   });
   response.flushHeaders();
   response.write("retry: 3000\nevent: ready\ndata: {}\n\n");
-  response.write(
-    `event: band-status\ndata: ${JSON.stringify(bandReader.status())}\n\n`,
-  );
+  response.write(`event: band-status\ndata: ${JSON.stringify(status)}\n\n`);
   eventClients.add(response);
   response.on("close", () => eventClients.delete(response));
 });
@@ -246,6 +373,8 @@ function broadcast(message: string) {
 
 const keepAlive = setInterval(() => {
   broadcast(": keep-alive\n\n");
+  for (const device of bridges.devices())
+    broadcast(`event: band-status\ndata: ${JSON.stringify(device.status)}\n\n`);
 }, 20_000);
 keepAlive.unref();
 
@@ -255,7 +384,10 @@ await Promise.all([
   artifacts.initialize(),
   catalog.initialize(),
 ]);
-const server = app.listen(port, "127.0.0.1", () => {
+drugIndex.initialize(catalog);
+await assistant.initialize();
+await speech.initialize();
+const server = app.listen(port, process.env.HOST || "127.0.0.1", () => {
   console.log(
     `MedDesk clinical workspace listening on http://localhost:${port}`,
   );

@@ -21,7 +21,8 @@ import { Icon } from "./components/Icon";
 import { Badge, Modal } from "./components/ui";
 import { PrescriptionPaper } from "./components/PrescriptionPaper";
 import { MedicineLibrary } from "./components/MedicineLibrary";
-import { Studio } from "./components/Studio";
+import { Studio } from "./components/DocumentStudio";
+import { appendMedicine, syncDocumentFields } from "./lib/document";
 import { Settings } from "./components/Settings";
 import { Assistant } from "./components/Assistant";
 import {
@@ -46,6 +47,8 @@ const navigation = [
   ["showcase", "Product showcase", "showcase"],
 ] as const;
 const STORAGE = "meddesk.workspace.v1";
+const draftKey = (draft: ConsultationInput) =>
+  JSON.stringify(parseConsultation(draft, true) ?? draft);
 function recoverDraft() {
   try {
     const raw = localStorage.getItem(STORAGE);
@@ -57,7 +60,9 @@ function recoverDraft() {
 
 export default function App() {
   const [draft, setDraft] = useState<ConsultationInput>(recoverDraft),
-    [page, setPage] = useState(() => window.location.hash === '#vitals' ? 'vitals' : 'studio'),
+    [page, setPage] = useState(() =>
+      window.location.hash === "#vitals" ? "vitals" : "studio",
+    ),
     [mobile, setMobile] = useState(false);
   const [role, setRole] = useState("doctor");
   const [caps, setCaps] = useState<Capabilities | null>(null),
@@ -80,19 +85,21 @@ export default function App() {
   const band = useBand(),
     hasContent = Boolean(
       draft.patient.name ||
-      draft.patient.age ||
-      draft.patient.sex ||
-      draft.patient.reference ||
-      draft.medications.length ||
-      draft.vitalReadingIds.length ||
-      draft.sources.length ||
-      clinicalSections.some(([key]) => draft[key]) ||
-      Object.values(draft.manualVitals).some(Boolean) ||
-      Object.values(draft.clinician).some(Boolean),
+        draft.document ||
+        draft.patient.age ||
+        draft.patient.sex ||
+        draft.patient.reference ||
+        draft.medications.length ||
+        draft.vitalReadingIds.length ||
+        draft.sources.length ||
+        clinicalSections.some(([key]) => draft[key]) ||
+        Object.values(draft.manualVitals).some(Boolean) ||
+        Object.values(draft.clinician).some(Boolean),
     ),
-    dirty =
-      JSON.stringify(draft) !== lastSaved && (lastSaved !== "" || hasContent),
+    dirty = draftKey(draft) !== lastSaved && (lastSaved !== "" || hasContent),
     issues = reviewIssues(draft);
+  const updateDraft = (next: ConsultationInput) =>
+    setDraft((previous) => syncDocumentFields(previous, next));
   const title =
     page === "settings"
       ? "Workspace settings"
@@ -184,7 +191,7 @@ export default function App() {
         },
       );
       const clean = parseConsultation(r.consultation)!;
-      setLastSaved(JSON.stringify(clean));
+      setLastSaved(draftKey(clean));
       setDraft((current) =>
         current.id === submitted.id
           ? { ...current, revision: clean.revision }
@@ -215,7 +222,7 @@ export default function App() {
       setModal("replace");
     } else {
       setDraft(next);
-      setLastSaved(next.revision ? JSON.stringify(next) : "");
+      setLastSaved(next.revision ? draftKey(next) : "");
       navigate("studio");
     }
   }
@@ -247,7 +254,7 @@ export default function App() {
       strength: product.strength,
       form: product.form,
     };
-    setDraft((d) => ({ ...d, medications: [...d.medications, medicine] }));
+    setDraft((d) => appendMedicine(d, medicine));
     navigate("studio");
     notify("Product added. Enter the authored dose and instructions.");
   };
@@ -258,8 +265,8 @@ export default function App() {
   const readFile = async (file?: File) => {
     if (!file) return;
     try {
-      if (file.size > 256 * 1024)
-        throw new Error("Draft imports must be smaller than 256 KB.");
+      if (file.size > 1024 * 1024)
+        throw new Error("Draft imports must be smaller than 1 MB.");
       replace(importDraft(JSON.parse(await file.text())));
       notify(
         "Imported as a new draft. Source files and device readings must be linked locally.",
@@ -275,7 +282,7 @@ export default function App() {
     setAssistantOpen(false);
   };
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${page === "studio" ? "studio-expanded" : ""}`}>
       <a href="#workspace" className="skip-link">
         Skip to workspace
       </a>
@@ -313,6 +320,8 @@ export default function App() {
           {navigation.map(([id, label, icon]) => (
             <button
               key={id}
+              aria-label={label}
+              title={label}
               aria-current={page === id ? "page" : undefined}
               className={page === id ? "active" : ""}
               onClick={() => navigate(id)}
@@ -326,6 +335,7 @@ export default function App() {
         <div className="sidebar-bottom">
           <button
             className="assistant-launch"
+            aria-label="Clinical assistant"
             onClick={() => setAssistantOpen(true)}
           >
             <Icon name="spark" />
@@ -441,7 +451,7 @@ export default function App() {
           {page === "studio" && (
             <Studio
               draft={draft}
-              update={setDraft}
+              update={updateDraft}
               onNew={makeNew}
               onFindPatient={() => navigate("history")}
               onFindMedicine={() => setModal("medicine")}
@@ -479,7 +489,7 @@ export default function App() {
           <div hidden={page !== "import"}>
             <ImportWorkspace
               draft={draft}
-              onChange={setDraft}
+              onChange={updateDraft}
               notify={notify}
             />
           </div>
@@ -535,7 +545,7 @@ export default function App() {
           {page === "settings" && (
             <Settings
               draft={draft}
-              update={setDraft}
+              update={updateDraft}
               capabilities={caps}
               navigate={navigate}
               onImport={() => fileInput.current?.click()}
@@ -694,9 +704,7 @@ export default function App() {
                 onClick={() => {
                   if (pending) {
                     setDraft(pending);
-                    setLastSaved(
-                      pending.revision ? JSON.stringify(pending) : "",
-                    );
+                    setLastSaved(pending.revision ? draftKey(pending) : "");
                     setPending(null);
                     navigate("studio");
                   }

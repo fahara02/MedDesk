@@ -10,7 +10,9 @@
     "build": "npm run build --workspace @meddesk/web && npm run build --workspace @meddesk/server",
     "test": "npm run test --workspace @meddesk/server && npm run test --workspace @meddesk/web",
     "typecheck": "npm run typecheck --workspace @meddesk/server && npm run typecheck --workspace @meddesk/web",
-    "test:integration": "node --test scripts/test-api.mjs",
+    "test:integration": "node --test scripts/test-api.mjs scripts/test-bridge-api.mjs",
+    "package:bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-bridge.ps1",
+    "test:bridge-daemon": "node --test scripts/test-bridge-daemon.mjs",
     "start": "npm run start --workspace @meddesk/server"
   },
   "devDependencies": {

@@ -219,7 +219,7 @@ describe("doctor workspace", () => {
       within(dialog).getByText("Allergy information has not been recorded."),
     ).toBeTruthy();
     expect(
-      within(dialog).getByRole("button", { name: "Ask Qwen" }),
+      within(dialog).getByRole("button", { name: "Ask assistant" }),
     ).toHaveProperty("disabled", true);
   });
   it("imports exact drafts as new records without importing measurement or artifact authority", () => {

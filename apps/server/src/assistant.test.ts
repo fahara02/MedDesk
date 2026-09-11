@@ -180,7 +180,7 @@ test("Qwen request preserves full authored context, cites retrieved sources, and
       );
     await assert.rejects(
       assistant.ask({ question: "Review Zephyr", draft: input }),
-      /AllocationQuota.FreeTierOnly/,
+      /no model quota/,
     );
   } finally {
     globalThis.fetch = originalFetch;

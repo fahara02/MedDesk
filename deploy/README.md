@@ -2,6 +2,33 @@
 
 Target: `https://medesk.lifeplusbd.tech` on `72.62.69.41`.
 
+## Live deployment — September 12, 2026
+
+The site is deployed. SSH uses `root` and the matching existing private key.
+Nginx already serves other applications, so `compose.nginx.yml` publishes only
+`127.0.0.1:8792`; Nginx provides HTTPS and the dashboard login. The current release
+is `/opt/meddesk/releases/20260912-studio-voice`, linked from `/opt/meddesk/current`.
+The app uses the persistent Docker volume `meddesk_clinical_data`.
+
+Private settings live in `/opt/meddesk/shared/server.env` (0600), with the dashboard
+password hash in `dashboard.htpasswd` (0640, root:www-data). The owner's local
+login copy is `E:/MedDesk/deploy/access.env`; never add it to Git. The internal
+proxy header is set by `proxy-secret.conf`, not by browsers. Existing sites were
+not replaced. The certificate expires December 10, 2026; Certbot's active renewal
+timer and a MedDesk-specific deploy hook reload Nginx after renewal.
+
+The healthy container was measured at about 98 MiB RAM against a 512 MiB limit.
+HTTPS checks verified authenticated UI, the exact logo bytes, 9,763 products in
+14 CSVs, a real assistant answer with retrieved citations, Bengali WAV generation,
+SSE delivery, installer download, unauthenticated refusal and cross-origin refusal.
+No local patient records or Bluetooth keys were copied. Remote physical Bluetooth
+observations still require enrolling the Windows bridge.
+
+To update after copying a verified source release and linking its private env file:
+`docker compose -f deploy/compose.nginx.yml up -d --build --wait app`.
+The previous application image is retained as `meddesk:pre-voice-20260912` for
+rollback. Preserve the shared data volume when changing releases.
+
 ```text
 Mi Band 5 --Bluetooth--> Windows PC --outbound HTTPS--> MedDesk server
                                                            |
@@ -102,8 +129,9 @@ index can run on Linux. Seed only the intended drug CSV files into the clinical 
 volume; never copy the local patient directory as a drug seed. Windows-generated speech
 is unavailable on Linux; the Docker image installs eSpeak NG for offline Bengali and
 English synthesis, with browser voices also selectable. Qwen needs
-working server-side provider credentials and quota. The current account's free-tier-only
-restriction rejected live calls. Signed native `.lps` export still needs native writer
+working server-side provider credentials and quota. The requested `qwen3.8-max`
+now responds successfully; many older models still hit the account's free-tier-only
+restriction. Signed native `.lps` export still needs native writer
 validation and authorization; hosting does not complete that feature.
 
 For hosted Qwen configuration, set `MEDDESK_QWEN_API_KEY`,

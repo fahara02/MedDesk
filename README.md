@@ -3,6 +3,10 @@
 Latest studio and bridge status: [delivery matrix](PROGRESS.md).
 Remote deployment and Windows installer: [deployment guide](deploy/README.md).
 The updated local instance is at `http://localhost:8791/`.
+The hosted studio is **https://medesk.lifeplusbd.tech**. Private login details are
+in `deploy/access.env` (ignored by Git). The hosted build includes the latest
+dictation and hospital branding changes; the older local backend remains running
+for Bluetooth collection.
 
 A local React and Node.js workspace for prescription drafting, source review,
 consultation history and real Mi Band 5 observations.
@@ -76,8 +80,9 @@ sleep rather than inventing a duration. See [PAIRING.md](PAIRING.md) for setup.
 Native `.lps` reading/writing, OCR, cryptographic signatures and pharmacy
 transactions are **not connected**. The new rich editor supports image signature
 placement, Windows TTS and offline Bengali/English synthesis through eSpeak NG.
-See the deployment guide for speech setup. Qwen/RAG is wired, but provider calls currently fail
-under the account's free-tier-only quota restriction. The coverage page
+See the deployment guide for speech setup. The requested backend model now
+responds successfully with the existing credentials; real hosted retrieval and
+citation checks pass. The coverage page
 maps the broader plan; it is not a claim that those capabilities are complete.
 Prescription JSON export and printing do not produce a signed `.lps` file.
 
@@ -107,3 +112,17 @@ Remove-Item Env:MEDDESK_LIVE_URL
 ```
 
 This DOM test is not a visual browser inspection.
+
+## Dictation and voice sample
+
+In the studio's side panel, select **Dictate**. Choose the spoken language and
+press **Start dictation**, allowing microphone access when prompted. Stop,
+review the recognized words and numbers, and insert at the document cursor.
+Browser speech-service availability varies; no microphone session starts by itself.
+
+To supply the requested comparison sample, choose **Record audio sample**, speak
+for up to 60 seconds without patient details, stop, listen, and choose **Send
+sample for comparison**. The recording stays in the browser until that explicit
+send. Samples are stored privately in the server's `voice-samples/` data folder.
+Sending a sample does not claim that it has been transcribed or benchmarked.
+See [model screening](reports/MODEL-COMPARISON.md) for measured results and limits.

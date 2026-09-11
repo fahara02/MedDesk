@@ -153,13 +153,14 @@ it("Qwen proposals require explicit insertion and cannot be inserted into a chan
   fireEvent.change(screen.getByRole("textbox"), {
     target: { value: "Improve wording" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Ask Qwen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Ask assistant" }));
   await waitFor(() =>
     expect(
       screen.getByRole("button", { name: "Insert proposal at cursor" }),
     ).toBeTruthy(),
   );
   expect(onInsert).not.toHaveBeenCalled();
+  expect(screen.queryByText(/Synthetic model|Qwen/i)).toBeNull();
   fireEvent.click(
     screen.getByRole("button", { name: "Insert proposal at cursor" }),
   );
@@ -209,7 +210,7 @@ it("canceling Qwen suppresses a late response", async () => {
   fireEvent.change(screen.getByRole("textbox"), {
     target: { value: "Review this draft" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Ask Qwen" }));
+  fireEvent.click(screen.getByRole("button", { name: "Ask assistant" }));
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(signal?.aborted).toBe(true);
   await act(async () => {

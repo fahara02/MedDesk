@@ -18,6 +18,7 @@ import {
 } from "./lib/clinic";
 import { useBand } from "./lib/useBand";
 import { Icon } from "./components/Icon";
+import { practice } from "./lib/branding";
 import { Badge, Modal } from "./components/ui";
 import { PrescriptionPaper } from "./components/PrescriptionPaper";
 import { MedicineLibrary } from "./components/MedicineLibrary";
@@ -94,7 +95,9 @@ export default function App() {
         draft.sources.length ||
         clinicalSections.some(([key]) => draft[key]) ||
         Object.values(draft.manualVitals).some(Boolean) ||
-        Object.values(draft.clinician).some(Boolean),
+        draft.clinician.registration ||
+        (draft.clinician.name && draft.clinician.name !== practice.clinician) ||
+        (draft.clinician.clinic && draft.clinician.clinic !== practice.name),
     ),
     dirty = draftKey(draft) !== lastSaved && (lastSaved !== "" || hasContent),
     issues = reviewIssues(draft);
@@ -295,12 +298,7 @@ export default function App() {
             navigate("studio");
           }}
         >
-          <span className="brand-logo">
-            m<span>+</span>
-          </span>
-          <span>
-            meddesk<span className="brand-sub">CLINICAL WORKSPACE</span>
-          </span>
+          <img className="hospital-brand" src={practice.logo} alt={practice.name} />
         </a>
         <button
           className="practice-switch"
@@ -311,7 +309,7 @@ export default function App() {
           </span>
           <span>
             <strong>{draft.clinician.clinic || "My practice"}</strong>
-            <small>Local workspace</small>
+            <small>Prescription workspace</small>
           </span>
           <Icon name="down" size={15} />
         </button>

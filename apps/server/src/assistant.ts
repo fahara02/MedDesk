@@ -31,8 +31,7 @@ export class PrescriptionAssistant {
       env.LUNA__LLM__BASE_URL;
     const model =
       this.environment.MEDDESK_QWEN_MODEL ||
-      env.LUNA__LLM__CHAT_MODEL ||
-      env.LUNA__LLM__MODEL;
+      "qwen3.8-max";
     if (
       key &&
       base &&
@@ -53,7 +52,7 @@ export class PrescriptionAssistant {
   async ask(value: unknown, signal?: AbortSignal) {
     if (!this.config)
       throw new ClinicError(
-        "Configure the standard Qwen endpoint and API key through the server LUNA environment file.",
+        "The assistant is not configured. Contact the workspace administrator.",
         503,
       );
     const input = value as { question?: unknown; draft?: unknown };
@@ -129,8 +128,8 @@ export class PrescriptionAssistant {
         const quota = body?.error?.code === "AllocationQuota.FreeTierOnly";
         throw new ClinicError(
           quota
-            ? "Qwen access is blocked by the Alibaba account: AllocationQuota.FreeTierOnly. Enable model quota or paid access for the configured standard API key."
-            : `Qwen could not complete the request (HTTP ${response.status}). Your document is unchanged.`,
+            ? "The assistant service account has no model quota. Contact the workspace administrator."
+            : `The assistant could not complete the request (HTTP ${response.status}). Your document is unchanged.`,
           502,
         );
       }
@@ -139,7 +138,7 @@ export class PrescriptionAssistant {
         answer = JSON.parse(body?.choices?.[0]?.message?.content);
       } catch {
         throw new ClinicError(
-          "Qwen returned an unreadable proposal. Your document is unchanged.",
+          "The assistant returned an unreadable proposal. Your document is unchanged.",
           502,
         );
       }

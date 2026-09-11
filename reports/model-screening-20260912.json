@@ -1,0 +1,1329 @@
+{
+  "date": "2026-09-11T22:39:48.115Z",
+  "scope": "All catalog entries classified; each text-assistant entry tested once on the same combined three-check prompt. Not a clinical review or robust quality ranking. Audio requires the owner's sample.",
+  "promptSha256": "673ef69ffe7be811d4d8a1bfbcd4eee17d825043b267d7c6118c4a5395be9e6b",
+  "catalogCount": 165,
+  "rows": [
+    {
+      "model": "ZHIPU/GLM-5.3",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 400,
+      "errorCode": "invalid_parameter_error",
+      "ms": 277
+    },
+    {
+      "model": "ccai-pro",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 500,
+      "errorCode": "internal_server_error",
+      "ms": 368
+    },
+    {
+      "model": "deepseek-v3.2",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 103
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 94
+    },
+    {
+      "model": "deepseek-v4-flash-0731",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1908,
+      "usage": {
+        "prompt_tokens": 168,
+        "completion_tokens": 79,
+        "total_tokens": 247,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 128
+    },
+    {
+      "model": "deepseek-v4-pro-0813",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1963,
+      "usage": {
+        "prompt_tokens": 168,
+        "completion_tokens": 79,
+        "total_tokens": 247,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "glm-5.1",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 102
+    },
+    {
+      "model": "glm-5.2",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1740,
+      "usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 176,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 265
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "glm-5.2-fast-preview",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 987,
+      "usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 176,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 265
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "kimi-k2.7-code",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 10821,
+      "usage": {
+        "prompt_tokens": 168,
+        "completion_tokens": 579,
+        "total_tokens": 747,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 518,
+          "text_tokens": 61
+        }
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\"verbatim\":[\"0.500 mg\",\"০.২৫ মি.গ্রা.\",\"প্রতিদিন রাতে\",\"Do not take 5 mg.\"],\"unknowns\":{\"allergies\":null,\"kidneyFunction\":null},\"citation\":\"source-01\"}"
+    },
+    {
+      "model": "kimi-k3",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 2314,
+      "usage": {
+        "completion_tokens": 61,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "text_tokens": 61
+        },
+        "prompt_tokens": 225,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 225
+        },
+        "total_tokens": 286
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\"verbatim\":[\"0.500 mg\",\"০.২৫ মি.গ্রা.\",\"প্রতিদিন রাতে\",\"Do not take 5 mg.\"],\"unknowns\":{\"allergies\":null,\"kidneyFunction\":null},\"citation\":\"source-01\"}"
+    },
+    {
+      "model": "kimi/kimi-k3",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 400,
+      "errorCode": "invalid_parameter_error",
+      "ms": 356
+    },
+    {
+      "model": "qvq-max",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 110
+    },
+    {
+      "model": "qwen-audio-3.0-asr-flash",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-coder-plus",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 3191,
+      "usage": {
+        "prompt_tokens": 185,
+        "completion_tokens": 89,
+        "total_tokens": 274
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\"0.500 mg\", \"০.২৫ মি.গ্রা.\", \"প্রতিদিন রাতে\", \"Do not take 5 mg.\"],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 92
+    },
+    {
+      "model": "qwen-flash-character",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 100
+    },
+    {
+      "model": "qwen-image-2.0",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-2.0-2026-03-03",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-2.0-pro",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-2.0-pro-2026-03-03",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-2.0-pro-2026-04-22",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-2.0-pro-2026-06-22",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-3.0",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-3.0-pro",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit-max",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit-max-2026-01-16",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit-plus",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit-plus-2025-10-30",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-edit-plus-2025-12-15",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-max",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-max-2025-12-30",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-plus",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-image-plus-2026-01-09",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-max",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 102
+    },
+    {
+      "model": "qwen-mt-flash",
+      "category": "translation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-mt-lite",
+      "category": "translation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-mt-plus",
+      "category": "translation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-mt-turbo",
+      "category": "translation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-omni-turbo",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 113
+    },
+    {
+      "model": "qwen-plus-2025-01-25",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1907,
+      "usage": {
+        "prompt_tokens": 185,
+        "completion_tokens": 89,
+        "total_tokens": 274
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\"0.500 mg\", \"০.২৫ মি.গ্রা.\", \"প্রতিদিন রাতে\", \"Do not take 5 mg.\"],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen-plus-2025-04-28",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 97
+    },
+    {
+      "model": "qwen-plus-2025-07-14",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 90
+    },
+    {
+      "model": "qwen-plus-2025-09-11",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen-plus-2025-12-01",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 92
+    },
+    {
+      "model": "qwen-plus-character",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 147
+    },
+    {
+      "model": "qwen-plus-latest",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 101
+    },
+    {
+      "model": "qwen-turbo",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 97
+    },
+    {
+      "model": "qwen-vl-max",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 112
+    },
+    {
+      "model": "qwen-vl-ocr-2025-11-20",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 126
+    },
+    {
+      "model": "qwen-vl-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 96
+    },
+    {
+      "model": "qwen2-7b-instruct",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 404,
+      "errorCode": "model_not_found",
+      "ms": 68
+    },
+    {
+      "model": "qwen3-14b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 93
+    },
+    {
+      "model": "qwen3-235b-a22b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 101
+    },
+    {
+      "model": "qwen3-235b-a22b-instruct-2507",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 100
+    },
+    {
+      "model": "qwen3-235b-a22b-thinking-2507",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 97
+    },
+    {
+      "model": "qwen3-30b-a3b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen3-30b-a3b-instruct-2507",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen3-30b-a3b-thinking-2507",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 95
+    },
+    {
+      "model": "qwen3-32b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 111
+    },
+    {
+      "model": "qwen3-8b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 112
+    },
+    {
+      "model": "qwen3-asr-flash-2026-02-10",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-asr-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-asr-flash-realtime-2025-10-27",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-asr-flash-realtime-2026-02-10",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-coder-480b-a35b-instruct",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 95
+    },
+    {
+      "model": "qwen3-coder-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 108
+    },
+    {
+      "model": "qwen3-coder-next",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 111
+    },
+    {
+      "model": "qwen3-coder-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 92
+    },
+    {
+      "model": "qwen3-coder-plus-2025-07-22",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 123
+    },
+    {
+      "model": "qwen3-coder-plus-2025-09-23",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 103
+    },
+    {
+      "model": "qwen3-livetranslate-flash",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-livetranslate-flash-2025-12-01",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-livetranslate-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-livetranslate-flash-realtime-2025-09-22",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-max",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 110
+    },
+    {
+      "model": "qwen3-max-2025-09-23",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 101
+    },
+    {
+      "model": "qwen3-max-2026-01-23",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 121
+    },
+    {
+      "model": "qwen3-max-preview",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 99
+    },
+    {
+      "model": "qwen3-next-80b-a3b-instruct",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 108
+    },
+    {
+      "model": "qwen3-next-80b-a3b-thinking",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen3-omni-30b-a3b-captioner",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash-2025-09-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash-2025-12-01",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash-realtime-2025-09-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-omni-flash-realtime-2025-12-01",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-s2s-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash-2025-09-18",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash-2025-11-27",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash-realtime",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash-realtime-2025-09-18",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-flash-realtime-2025-11-27",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-instruct-flash",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-instruct-flash-2026-01-26",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-instruct-flash-realtime",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-instruct-flash-realtime-2026-01-22",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vc-2026-01-22",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vc-realtime-2025-11-27",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vc-realtime-2026-01-15",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vd-2026-01-26",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vd-realtime-2025-12-16",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-tts-vd-realtime-2026-01-15",
+      "category": "speech synthesis",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3-vl-235b-a22b-instruct",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 102
+    },
+    {
+      "model": "qwen3-vl-235b-a22b-thinking",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen3-vl-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 102
+    },
+    {
+      "model": "qwen3-vl-flash-2025-10-15",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 94
+    },
+    {
+      "model": "qwen3-vl-flash-2026-01-22",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 106
+    },
+    {
+      "model": "qwen3-vl-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 108
+    },
+    {
+      "model": "qwen3-vl-plus-2025-09-23",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 136
+    },
+    {
+      "model": "qwen3-vl-plus-2025-12-19",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 121
+    },
+    {
+      "model": "qwen3.5-122b-a10b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 93
+    },
+    {
+      "model": "qwen3.5-27b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 116
+    },
+    {
+      "model": "qwen3.5-35b-a3b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 112
+    },
+    {
+      "model": "qwen3.5-397b-a17b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 108
+    },
+    {
+      "model": "qwen3.5-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 100
+    },
+    {
+      "model": "qwen3.5-flash-2026-02-23",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 107
+    },
+    {
+      "model": "qwen3.5-livetranslate-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-livetranslate-flash-realtime-2026-05-19",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-flash",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-flash-2026-03-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-flash-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-flash-realtime-2026-03-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-plus",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-plus-2026-03-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-plus-realtime",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-omni-plus-realtime-2026-03-15",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.5-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 120
+    },
+    {
+      "model": "qwen3.5-plus-2026-02-15",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 98
+    },
+    {
+      "model": "qwen3.5-plus-2026-04-20",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 107
+    },
+    {
+      "model": "qwen3.6-27b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 99
+    },
+    {
+      "model": "qwen3.6-35b-a3b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 136
+    },
+    {
+      "model": "qwen3.6-flash",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 122
+    },
+    {
+      "model": "qwen3.6-flash-2026-04-16",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 97
+    },
+    {
+      "model": "qwen3.6-max-preview",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 128
+    },
+    {
+      "model": "qwen3.6-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 90
+    },
+    {
+      "model": "qwen3.6-plus-2026-04-02",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 165
+    },
+    {
+      "model": "qwen3.7-flash",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1082,
+      "usage": {
+        "completion_tokens": 94,
+        "prompt_tokens": 177,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 177
+        },
+        "total_tokens": 271
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen3.7-flash-2026-07-15",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1340,
+      "usage": {
+        "completion_tokens": 94,
+        "prompt_tokens": 177,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 177
+        },
+        "total_tokens": 271
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen3.7-max",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 94
+    },
+    {
+      "model": "qwen3.7-max-2026-05-17",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 97
+    },
+    {
+      "model": "qwen3.7-max-2026-05-20",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 109
+    },
+    {
+      "model": "qwen3.7-max-2026-06-08",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 115
+    },
+    {
+      "model": "qwen3.7-max-preview",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 100
+    },
+    {
+      "model": "qwen3.7-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 89
+    },
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 88
+    },
+    {
+      "model": "qwen3.7-text-embedding",
+      "category": "embedding",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "qwen3.8-2.4t-a95b",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 400,
+      "errorCode": "invalid_parameter_error",
+      "ms": 783
+    },
+    {
+      "model": "qwen3.8-27b",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1971,
+      "usage": {
+        "completion_tokens": 95,
+        "completion_tokens_details": {},
+        "prompt_tokens": 177,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 177
+        },
+        "total_tokens": 272
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen3.8-flash",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1821,
+      "usage": {
+        "completion_tokens": 94,
+        "prompt_tokens": 190,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 190
+        },
+        "total_tokens": 284
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\n  \"verbatim\": [\n    \"0.500 mg\",\n    \"০.২৫ মি.গ্রা.\",\n    \"প্রতিদিন রাতে\",\n    \"Do not take 5 mg.\"\n  ],\n  \"unknowns\": {\n    \"allergies\": null,\n    \"kidneyFunction\": null\n  },\n  \"citation\": \"source-01\"\n}"
+    },
+    {
+      "model": "qwen3.8-max",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1640,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 177,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 177
+        },
+        "total_tokens": 235
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\"verbatim\":[\"0.500 mg\",\"০.২৫ মি.গ্রা.\",\"প্রতিদিন রাতে\",\"Do not take 5 mg.\"],\"unknowns\":{\"allergies\":null,\"kidneyFunction\":null},\"citation\":\"source-01\"}"
+    },
+    {
+      "model": "qwen3.8-max-0902",
+      "category": "text assistant",
+      "state": "responded",
+      "httpStatus": 200,
+      "errorCode": null,
+      "ms": 1615,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 177,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 177
+        },
+        "total_tokens": 235
+      },
+      "checks": {
+        "exactText": true,
+        "missingFacts": true,
+        "sourceBoundary": true
+      },
+      "passed": 3,
+      "answer": "{\"verbatim\":[\"0.500 mg\",\"০.২৫ মি.গ্রা.\",\"প্রতিদিন রাতে\",\"Do not take 5 mg.\"],\"unknowns\":{\"allergies\":null,\"kidneyFunction\":null},\"citation\":\"source-01\"}"
+    },
+    {
+      "model": "qwq-plus",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 403,
+      "errorCode": "AllocationQuota.FreeTierOnly",
+      "ms": 95
+    },
+    {
+      "model": "qwq-plus-2025-03-05",
+      "category": "text assistant",
+      "state": "request refused",
+      "httpStatus": 400,
+      "errorCode": "invalid_parameter_error",
+      "ms": 119
+    },
+    {
+      "model": "text-embedding-v3",
+      "category": "embedding",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "text-embedding-v4",
+      "category": "embedding",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "tongyi-tingwu-slp",
+      "category": "speech or multimodal: audio comparison pending",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "wan2.7-image",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "wan2.7-image-pro",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    },
+    {
+      "model": "z-image-turbo",
+      "category": "image generation",
+      "state": "outside text benchmark"
+    }
+  ]
+}

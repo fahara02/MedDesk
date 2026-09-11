@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { documentExtensions } from "./editor-extensions";
 import type { DocumentNode } from "../lib/document";
+import { Letterhead } from "./Letterhead";
 export function DocumentPreview({
   document,
   synthetic = false,
@@ -20,6 +21,7 @@ export function DocumentPreview({
   }, [document, editor]);
   return (
     <article className="document-sheet" aria-label="Prescription preview">
+      {!synthetic && <Letterhead />}
       {synthetic && (
         <p className="notice">
           Fictional demonstration — not a prescription for patient use.

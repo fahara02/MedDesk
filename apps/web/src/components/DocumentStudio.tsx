@@ -13,6 +13,8 @@ import { documentExtensions } from "./editor-extensions";
 import { Assistant } from "./Assistant";
 import { SignatureTool } from "./SignatureTool";
 import { SpeechTool } from "./SpeechTool";
+import { DictationTool } from "./DictationTool";
+import { Letterhead } from "./Letterhead";
 import { Icon } from "./Icon";
 
 export function Studio({
@@ -405,6 +407,7 @@ export function Studio({
             <span>16</span>
           </div>
           <div className="document-sheet" style={{ zoom: zoom / 100 }}>
+            {!draft.synthetic && <Letterhead />}
             <EditorContent editor={editor} />
           </div>
         </div>
@@ -415,6 +418,7 @@ export function Studio({
                 ["medicines", "Drugs"],
                 ["assistant", "AI"],
                 ["speech", "Listen"],
+                ["dictation", "Dictate"],
                 ["signature", "Sign"],
               ].map(([id, label]) => (
                 <button
@@ -494,6 +498,11 @@ export function Studio({
                 <SpeechTool
                   text={documentText(editor.getJSON() as DocumentNode)}
                 />
+              )}
+              {tool === "dictation" && (
+                <DictationTool key={draft.id} onInsert={(text) =>
+                  editor.chain().focus().insertContent({ type: "text", text }).run()
+                } />
               )}
               {tool === "signature" && (
                 <SignatureTool

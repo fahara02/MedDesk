@@ -4,13 +4,65 @@ Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separat
 native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
 edited for this delivery.
 
+## Latest delivery — hosted studio, dictation and branding
+
+The owner explicitly resumed deployment and it is now live at
+**https://medesk.lifeplusbd.tech**. `root@72.62.69.41` works with the previously
+matched `id_ed25519_newage` private key. The earlier missing-username blocker is
+resolved. Nginx hosts this new site alongside the existing applications; the
+healthy MedDesk Docker container binds only 127.0.0.1:8792, uses about 98 MiB RAM,
+and retains data in `meddesk_clinical_data`. Current release:
+`/opt/meddesk/releases/20260912-studio-voice`, with `/opt/meddesk/current` symlink.
+Dashboard login details are in ignored `deploy/access.env`. No secrets were printed.
+
+The owner selected `qwen3.8-max`. It succeeds with the existing LUNA credential;
+both a direct API call and the actual hosted assistant route passed. Hosted RAG
+returned eight source excerpts, cited the document and a source, and preserved
+the authored `0.500` decimal. Keep the model name out of the UI. All 165 catalog
+entries were classified and 92 text candidates screened; 14 responded with 3/3
+synthetic checks. `reports/MODEL-COMPARISON.md` states the narrow evidence scope.
+Qwen3.5-Omni Plus/Flash speech probes still hit exhausted free quota. They used
+synthetic eSpeak audio, never the owner's voice. No audio accuracy ranking exists.
+
+The Dictate tool now supports browser speech recognition with exact finalized
+text retained once, explicit reviewed insertion, microphone cleanup, plus a
+60-second sample recorder. Audio stays in the browser until the user chooses
+Send sample for comparison. The authenticated server stores it under private
+`voice-samples/`; GET `/api/audio-samples` lists pending samples. As of the
+deployment check there were zero samples. Do not call a synthetic recording the
+owner's sample. The language preference question remains unanswered; default is
+Bangla (Bangladesh), with selectable English and Bangla (India).
+
+The supplied `assets/LCH_logo.png` is used unchanged in the UI and letterhead.
+The supplied public doctor profile returned the exact name
+**Dr. A.F.M. Kamal Uddin**; this and the hospital name seed new drafts. Existing
+draft identities are retained. The profile's BMDC field was null, so no registration
+was invented. Fictional examples retain their fictional prescriber.
+
+Verification: 18 server tests, 35 web tests, two HTTP integration tests, and local
+and remote production builds passed. Real HTTPS checks passed for protected login,
+matching logo bytes, current frontend controls, all 14 drug CSVs, assistant/RAG,
+SSE frames, Bengali speech and installer download. The Bengali hosted WAV was
+156,450 bytes and matched its exact source-text hash. Microphone operation and
+visual browser QA remain unverified; browser discovery previously had no connection.
+Physical remote band data still requires enrolling a Windows PC. The local 8791
+collector remains active; its backend predates this remote studio update.
+
+Native `.lps` export remains unfinished. The writer requires production schema
+binding, validation, compatibility and authorization implementations. Q-12's
+depth decision and the unsigned-export policy remain owner-reserved. Native
+medication orders also require explicit structured dosage course and SigReview
+facts; the studio's authored strings cannot silently create those clinical facts.
+No native source changed and paused lanes were not resumed.
+
 ## Current direction
 
 The active goal is a full-width prescription document editor with side tools,
 TTS, LUNA-backed Qwen assistance, drug retrieval, signature placement and genuine
 `.lps` saving. The owner also requested deployment to `72.62.69.41` as
 `medesk.lifeplusbd.tech` and an installable Windows Bluetooth forwarding daemon.
-Preserve both requirements. Native export and working Qwen calls remain unfinished.
+Preserve both requirements. Native export remains unfinished. Hosted Qwen calls
+now work with the owner's requested model, as recorded below.
 
 Collection remains server/desktop-owned every ten seconds, with React using SSE.
 The browser must not own Bluetooth or receive the band key. Do not call saved

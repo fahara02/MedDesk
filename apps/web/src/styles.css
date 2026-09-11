@@ -3199,3 +3199,4 @@ code {
 .device-battery { display: flex; align-items: center; gap: 10px; color: #647084; font-size: 11px; padding: 12px; background: #f7f8fc; border-radius: 8px; }
 @media(max-width: 1200px) { .vital-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width: 700px) { .vital-cards { grid-template-columns: minmax(0, 1fr); } }
+.hospital-brand { width:100%; max-width:215px; height:auto; } .hospital-letterhead { padding:24px 48px 0; text-align:left; } .hospital-letterhead img { width:245px; max-width:100%; height:auto; } .hospital-letterhead + .tiptap { padding-top:22px; } .dictation-audio { width:100%; margin:12px 0; } .dictation-interim { min-height:24px; color:#6d617f; font-style:italic; } .dictation-recording { color:#b42318; font-weight:700; } .tools-tabs { flex-wrap:wrap; }

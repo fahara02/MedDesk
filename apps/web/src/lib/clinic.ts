@@ -1,4 +1,5 @@
 import { parseConsultation } from "../../../server/src/clinical-model";
+import { practice } from "./branding";
 export { parseConsultation };
 export type {
   Patient,
@@ -71,7 +72,7 @@ export function newConsultation(): ConsultationInput {
       sex: "",
       reference: "",
     },
-    clinician: { name: "", registration: "", clinic: "" },
+    clinician: { name: practice.clinician, registration: "", clinic: practice.name },
     date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
     complaints: "",
     history: "",

@@ -12,6 +12,7 @@ import { SleepStore } from "./sleep.js";
 import { DrugIndex } from "./drug-index.js";
 import { PrescriptionAssistant } from "./assistant.js";
 import { SpeechService } from "./speech.js";
+import { AudioSamples } from "./audio-samples.js";
 import { BridgeRegistry } from "./bridge-registry.js";
 import { remoteAccess } from "./remote-access.js";
 import { mkdir } from "node:fs/promises";
@@ -41,6 +42,7 @@ const speech = new SpeechService(
 const artifacts = new ArtifactStore(
   path.join(dataDirectory, "clinic", "artifacts"),
 );
+const audioSamples = new AudioSamples(path.join(dataDirectory, "voice-samples"));
 const eventClients = new Set<Response>();
 await mkdir(dataDirectory, { recursive: true });
 const bridges = new BridgeRegistry(path.join(dataDirectory, "bridges.sqlite"));
@@ -106,6 +108,10 @@ app.get("/api/assistant/status", (_request, response) =>
 app.get("/api/speech/voices", (_request, response) =>
   response.json(speech.status()),
 );
+app.get("/api/audio-samples", async (_request, response) => response.json({ samples: await audioSamples.list() }));
+app.post("/api/audio-samples", express.raw({ type: "audio/*", limit: "8mb" }), async (request, response) => {
+  response.status(201).json({ sample: await audioSamples.save(request.body, request.get("Content-Type") || "", request.get("X-Audio-Language")) });
+});
 app.post("/api/speech", async (request, response) => {
   const controller = new AbortController();
   response.once("close", () => {

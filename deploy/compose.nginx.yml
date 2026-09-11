@@ -1,0 +1,26 @@
+name: meddesk
+services:
+  app:
+    image: meddesk:studio
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: server.env
+    ports: ["127.0.0.1:8792:8787"]
+    volumes:
+      - clinical_data:/var/lib/meddesk
+    mem_limit: 512m
+    cpus: 2
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  clinical_data:

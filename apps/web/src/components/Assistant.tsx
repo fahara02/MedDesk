@@ -78,14 +78,14 @@ export function Assistant({
       <h3>Write with your sources</h3>
       <Badge tone={connection?.configured ? "blue" : "amber"}>
         {connection?.configured
-          ? connection.model
-          : "Qwen connection unavailable"}
+          ? "Assistant ready"
+          : "Assistant unavailable"}
       </Badge>
       <p className="helper">
         Ask about this document and{" "}
         {connection?.retrieval?.products?.toLocaleString() || "your"} indexed
         drug records. Sending a question shares the current document and
-        retrieved excerpts with Qwen.
+        retrieved excerpts with the AI service.
       </p>
       <div className="suggestion-list">
         <button
@@ -150,7 +150,7 @@ export function Assistant({
           disabled={busy || !question.trim()}
           onClick={() => void ask()}
         >
-          {busy ? "Retrieving and asking Qwen…" : "Ask Qwen"}
+          {busy ? "Reviewing your sources…" : "Ask assistant"}
         </button>
         {busy && (
           <button className="button" onClick={() => pending.current?.abort()}>
@@ -165,7 +165,7 @@ export function Assistant({
       )}
       {answer && (
         <section className="assistant-result">
-          <Badge tone="blue">{answer.model} · source-cited response</Badge>
+          <Badge tone="blue">Response with sources</Badge>
           <p className="assistant-answer">{answer.answer}</p>
           {answer.proposal && (
             <>

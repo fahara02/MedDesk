@@ -4,7 +4,47 @@ Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separat
 native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
 edited for this delivery.
 
-## Latest delivery — hosted studio, dictation and branding
+## Latest delivery — prescription layout, signature and installer access
+
+The owner reported that requested changes were absent from the live site.
+Local implementation is not delivery: publish and verify the hosted assets.
+The prescription release is now live. Original MedDesk M branding is restored
+in app/login; LCH appears on the prescription only. Editor and print share a
+compact doctor header, patient strip at top, left notes and wider numbered Rx.
+English is the default; explicit English/Bangla selection changes labels and
+speech defaults without translating authored clinical text.
+
+The supplied signature was edited with image generation for a white background,
+then JPEG-encoded within the existing 200 KB limit. Original preserved. Private
+`data/prescriber/signature.jpg` is 106,785 bytes, served only after login and
+installed in the persistent remote volume (directory 0700/file 0600, node-owned).
+The doctor's draft template places it in the footer; existing signatures,
+fictional examples and other prescribers are excluded. Image placement is not
+certificate signing. Keep the image out of Git and public assets.
+
+“Install Mi Band runner” opens download, server address, enrollment code/copy
+and PC-selection steps. The full hosted 34,153,472-byte executable matches the
+locally extraction-verified package. Fresh-PC installation remains unverified.
+
+Voice-capture failure is not yet reproduced in the owner's browser. Confirmed
+control defects are fixed: speech errors unlock capture without an end callback,
+pending microphone requests can be canceled, and status is visible at the top
+with elapsed time, captured bytes and microphone label. Capture errors separate
+permission, busy/missing input and unsupported encoding. Speech startup/stop
+have bounded timeouts. Dictation still uses the browser speech service;
+comparison-sample recording does not transcribe. Zero samples had reached the
+server at 05:53 Dhaka. Do not claim microphone capture is verified. No browser
+is connected for visual print pagination or physical microphone QA.
+
+Production build, 22 server tests, 49 web tests (one physical test skipped),
+two HTTP integration tests, installer extraction and live HTTPS asset/signature/
+installer/SSE checks passed. See `reports/prescription-deployment-20260912.json`.
+Native sources remain paused; no native task counts changed.
+The four requested native repository gates also passed: docs, architecture,
+87/87 architecture self-test mutations, and schema audit. Architecture check
+retains its two existing warnings about directory ownership and size budgets.
+
+## Hosted service background
 
 The owner explicitly resumed deployment and it is now live at
 **https://medesk.lifeplusbd.tech**. `root@72.62.69.41` works with the previously
@@ -12,7 +52,7 @@ matched `id_ed25519_newage` private key. The earlier missing-username blocker is
 resolved. Nginx hosts this new site alongside the existing applications; the
 healthy MedDesk Docker container binds only 127.0.0.1:8792, uses about 98 MiB RAM,
 and retains data in `meddesk_clinical_data`. Current release:
-`/opt/meddesk/releases/20260912-studio-voice`, with `/opt/meddesk/current` symlink.
+`/opt/meddesk/releases/20260912-prescription-pad`, with `/opt/meddesk/current` symlink.
 Dashboard login details are in ignored `deploy/access.env`. No secrets were printed.
 
 The owner selected `qwen3.8-max`. It succeeds with the existing LUNA credential;
@@ -30,10 +70,11 @@ text retained once, explicit reviewed insertion, microphone cleanup, plus a
 Send sample for comparison. The authenticated server stores it under private
 `voice-samples/`; GET `/api/audio-samples` lists pending samples. As of the
 deployment check there were zero samples. Do not call a synthetic recording the
-owner's sample. The language preference question remains unanswered; default is
-Bangla (Bangladesh), with selectable English and Bangla (India).
+owner's sample. The owner has since selected English by default, with explicit
+language selection controlling prescription labels and speech defaults.
 
-The supplied `assets/LCH_logo.png` is used unchanged in the UI and letterhead.
+The supplied `assets/LCH_logo.png` is used unchanged on the prescription letterhead.
+The app and login use the original MedDesk M logo.
 The supplied public doctor profile returned the exact name
 **Dr. A.F.M. Kamal Uddin**; this and the hospital name seed new drafts. Existing
 draft identities are retained. The profile's BMDC field was null, so no registration
@@ -221,7 +262,7 @@ speech runtime because the active application uses it.
 
 Latest deployment, September 12: `https://medesk.lifeplusbd.tech` is live on
 `72.62.69.41`, SSH user `root`, key `C:/Users/FHR/.ssh/id_ed25519_newage`.
-The current release is `/opt/meddesk/releases/20260912-studio-login`, linked from
+The current release is `/opt/meddesk/releases/20260912-prescription-pad`, linked from
 `/opt/meddesk/current`. Nginx serves HTTPS; the Node container binds only
 127.0.0.1:8792 and retains the `meddesk_clinical_data` volume. The branded React
 login replaces HTTP Basic Auth. The owner's existing username and chosen password
@@ -235,7 +276,8 @@ the session and closes its SSE streams. The public shell contains no patient dat
 clinical APIs, sample recordings and installer downloads require a session.
 Desktop enrollment/uplink keep their code/bearer authentication. Preserve local
 draft recovery across the sign-in boundary. The previous image is retained as
-`meddesk:pre-login-20260912`; restore Basic Auth BEFORE rolling back to that image.
+`meddesk:pre-prescription-20260912` for the login-capable prior release. The older
+`meddesk:pre-login-20260912` needs Basic Auth restored BEFORE rollback to it.
 
 Login release verification: 22 server tests, 38 web tests (physical live test
 not run for this auth change), both HTTP integration tests, production build and

@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { loadSavedSignature } from "../lib/signature";
 export function SignatureTool({
   onPlace,
   disabled,
@@ -9,8 +10,20 @@ export function SignatureTool({
   const canvas = useRef<HTMLCanvasElement>(null),
     drawing = useRef(false);
   const hasInk = useRef(false);
+  const changes = useRef(0);
+  const [saved, setSaved] = useState("");
   const [src, setSrc] = useState(""),
     [error, setError] = useState("");
+  useEffect(() => {
+    const abort = new AbortController();
+    void loadSavedSignature(abort.signal)
+      .then(value => {
+        if (!value || abort.signal.aborted) return;
+        setSaved(value);
+        if (changes.current === 0) setSrc(value);
+      }).catch(() => {});
+    return () => abort.abort();
+  }, []);
   const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return {
@@ -22,8 +35,8 @@ export function SignatureTool({
     <div className="signature-tool">
       <h3>Doctor’s signature</h3>
       <p className="helper">
-        Draw your signature or upload its image, then place it at the document
-        cursor. You can move or delete it in the document.
+        Use your saved signature, draw or upload an image, then place it in the
+        signature area. You can move or delete it in the document.
       </p>
       <canvas
         ref={canvas}
@@ -31,6 +44,7 @@ export function SignatureTool({
         height={220}
         aria-label="Draw your signature"
         onPointerDown={(event) => {
+          changes.current++;
           const context = canvas.current!.getContext("2d")!;
           const p = point(event);
           context.beginPath();
@@ -58,9 +72,11 @@ export function SignatureTool({
         }}
       />
       <div className="toolbar">
+        {saved && <button className="button small" onClick={() => { changes.current++; setSrc(saved); setError(""); }}>Use saved signature</button>}
         <button
           className="button small"
           onClick={() => {
+            changes.current++;
             canvas.current?.getContext("2d")?.clearRect(0, 0, 600, 220);
             hasInk.current = false;
             setSrc("");
@@ -77,6 +93,7 @@ export function SignatureTool({
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              changes.current++;
               if (
                 !["image/png", "image/jpeg"].includes(file.type) ||
                 file.size > 200000
@@ -111,7 +128,7 @@ export function SignatureTool({
         disabled={!src || disabled}
         onClick={() => onPlace(src)}
       >
-        Place signature at cursor
+        Place signature
       </button>
       {disabled && (
         <p className="helper">

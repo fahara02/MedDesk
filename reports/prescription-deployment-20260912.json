@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-11T23:58:25.948Z",
+  "url": "https://medesk.lifeplusbd.tech",
+  "release": "20260912-prescription-pad",
+  "bundle": "/assets/index-BsiS3wod.js",
+  "styles": "/assets/index-pHlccH8N.css",
+  "newAssetsServed": true,
+  "privateAssetsRequireLogin": true,
+  "signature": {
+    "bytes": 106785,
+    "sha256": "def89b2ad78a4d2fcc00aa5529367cea2ad858ee6d99cac7945c09327b77b1d5",
+    "matchesWhiteBackgroundAsset": true
+  },
+  "installer": {
+    "bytes": 34153472,
+    "sha256": "e84fc7c1f8a9a8e44e2a27ba77f6db55c0bc14f308e5377454f1fe2daa4c84fc",
+    "matchesVerifiedWindowsPackage": true
+  },
+  "receivedVoiceSampleCount": 0,
+  "products": 9763,
+  "authenticatedSse": true,
+  "validation": {
+    "serverTests": 22,
+    "webTests": 49,
+    "webSkipped": 1,
+    "httpIntegrationTests": 2,
+    "nativeGates": "docs, arch, arch selftest 87/87 and schema audit passed; 2 existing arch warnings",
+    "browserMicrophone": "Unverified: no connected browser",
+    "visualPrintPagination": "Unverified: no connected browser",
+    "freshPcInstallation": "Not performed"
+  }
+}

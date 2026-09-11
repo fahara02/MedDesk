@@ -81,11 +81,17 @@ const MedicationBlock = Node.create({
       [
         "div",
         { class: "medication-handle", contenteditable: "false" },
-        "℞  Medication order",
+        "",
       ],
       ["div", { class: "medication-fields" }, 0],
     ];
   },
+});
+const PrescriptionSection = Node.create({
+  name: "prescriptionSection", group: "block", content: "block+", defining: true, isolating: true,
+  addAttributes() { return { kind: { default: "rx" } }; },
+  parseHTML() { return [{ tag: "section[data-prescription-section]", getAttrs: element => ({ kind: element.getAttribute("data-prescription-section") }) }]; },
+  renderHTML({ node }) { return ["section", { "data-prescription-section": node.attrs.kind, class: `prescription-${node.attrs.kind}` }, 0]; },
 });
 const Signature = Node.create({
   name: "signature",
@@ -154,13 +160,16 @@ export function documentExtensions() {
     RecordField,
     MedicationBlock,
     Signature,
+    PrescriptionSection,
     TextAlign.configure({ types: ["heading", "paragraph"] }),
     Placeholder.configure({
       placeholder: ({ node }) =>
-        node.type.name === "recordField"
+        node.type.name === "prescriptionSection" ? "" : node.type.name === "recordField"
           ? "Click to write…"
           : "Write here, or insert a medicine from the tools panel…",
       includeChildren: true,
+      showOnlyWhenEditable: false,
+      showOnlyCurrent: false,
     }),
   ];
 }

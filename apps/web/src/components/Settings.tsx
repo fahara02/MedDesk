@@ -39,14 +39,18 @@ export function Settings({
                 ["name", "Prescriber name"],
                 ["registration", "Registration number"],
                 ["clinic", "Clinic / practice details"],
+                ["qualifications", "Qualifications"],
+                ["designation", "Specialty / designation"],
+                ["address", "Chamber address"],
+                ["phone", "Appointment / contact number"],
               ] as const
             ).map(([key, label]) => (
               <Field key={key} label={label}>
                 <input
                   maxLength={
-                    key === "clinic" ? 400 : key === "registration" ? 100 : 160
+                    key === "registration" || key === "phone" ? 100 : key === "name" ? 160 : 400
                   }
-                  value={draft.clinician[key]}
+                  value={draft.clinician[key] || ""}
                   onChange={(e) =>
                     update({
                       ...draft,

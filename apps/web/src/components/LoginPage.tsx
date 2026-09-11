@@ -24,7 +24,7 @@ export function LoginPage({ onLogin, checking, connectionError, onRetry, message
   }
   return <main className="login-page">
     <section className="login-story" aria-label="MedDesk doctor workspace">
-      <a className="login-wordmark" href="/" aria-label="MedDesk home"><span><Icon name="studio" size={25} /></span>MedDesk</a>
+      <a className="login-wordmark" href="/" aria-label="MedDesk home"><span className="brand-logo">m<span>+</span></span>MedDesk</a>
       <div className="login-story-content">
         <span className="login-eyebrow">YOUR CLINICAL WORKSPACE</span>
         <h1>More time for <br />the person <br /><em>in front of you.</em></h1>
@@ -38,7 +38,7 @@ export function LoginPage({ onLogin, checking, connectionError, onRetry, message
       <div className="login-story-footer"><span className="login-monogram">MK</span><div><strong>{practice.clinician}</strong><span>Doctor workspace</span></div></div>
     </section>
     <section className="login-panel" aria-labelledby="login-title">
-      <img className="login-hospital" src={practice.logo} alt={practice.name} />
+      <a className="brand login-app-brand" href="/" aria-label="MedDesk"><span className="brand-logo">m<span>+</span></span><span>meddesk<span className="brand-sub">CLINICAL WORKSPACE</span></span></a>
       <div className="login-form-wrap">
         <span className="login-welcome">WELCOME BACK</span>
         <h2 id="login-title">Sign in to MedDesk</h2>

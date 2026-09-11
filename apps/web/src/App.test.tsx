@@ -14,6 +14,19 @@ import { importDraft, newConsultation, blankMedication } from "./lib/clinic";
 import coverage from "./content/coverage.json";
 
 let records: Record<string, any>;
+it("loads the doctor's saved signature into the footer and exposes the website installer", async () => {
+  const previous = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn((url: string, options?: RequestInit) => url === "/api/prescriber/signature"
+    ? Promise.resolve(new Response(new Uint8Array([255,216,255,224]), { headers: { "Content-Type": "image/jpeg" } }))
+    : previous(url, options)));
+  const { container } = render(<App />);
+  await waitFor(() => expect(container.querySelector('.prescription-footer [data-signature]')).not.toBeNull());
+  expect(container.querySelector('.prescription-rx [data-signature]')).toBeNull();
+  fireEvent.click(screen.getByText("Install Mi Band runner"));
+  const dialog = screen.getByRole("dialog");
+  expect(within(dialog).getByRole("link", { name: "Download Windows installer" }).getAttribute("href")).toBe("/downloads/MedDesk-Bridge-Setup.exe");
+  expect(within(dialog).getByLabelText("Server address")).toBeTruthy();
+});
 beforeEach(() => {
   records = {};
   localStorage.clear();
@@ -135,26 +148,28 @@ describe("doctor workspace", () => {
     await waitFor(() =>
       expect(
         screen
-          .getByRole("button", { name: "Place signature at cursor" })
+          .getByRole("button", { name: "Place signature" })
           .hasAttribute("disabled"),
       ).toBe(false),
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Place signature at cursor" }),
+      screen.getByRole("button", { name: "Place signature" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
     await waitFor(() => expect(Object.values(records)).toHaveLength(1));
     const saved = Object.values(records)[0];
+    const nodes = (node: any): any[] => [node, ...(node.content || []).flatMap(nodes)];
+    const allNodes = nodes(saved.document);
     expect(saved.patient.name).toBe("Synthetic document integration");
     expect(saved.clinician.name).toBe("Synthetic prescriber");
     expect(
-      saved.document.content.some((node: any) => node.type === "table"),
+      allNodes.some((node: any) => node.type === "table"),
     ).toBe(true);
     expect(
-      saved.document.content.some((node: any) => node.type === "signature"),
+      allNodes.some((node: any) => node.type === "signature"),
     ).toBe(true);
     expect(
-      saved.document.content.filter(
+      allNodes.filter(
         (node: any) => node.attrs?.field === "patient.name",
       ),
     ).toHaveLength(1);
@@ -168,6 +183,9 @@ describe("doctor workspace", () => {
     await writeField("name", "Test product");
     await writeField("dose", "0.500 mg");
     await writeField("frequency", "প্রতিদিন");
+    expect(fieldElement("patient.name").closest("[data-prescription-section]")?.getAttribute("data-prescription-section")).toBe("patient");
+    expect(fieldElement("name").closest(".prescription-rx")).not.toBeNull();
+    expect(fieldElement("name").closest(".record-field")!.classList.contains("is-empty")).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
     await waitFor(() => expect(Object.values(records)).toHaveLength(1));
     expect(Object.values(records)[0].medications[0].dose).toBe("0.500 mg");
@@ -197,6 +215,28 @@ describe("doctor workspace", () => {
       screen.getByRole("button", { name: "Prescription studio" }),
     );
     expect(fieldElement("patient.name").textContent).toBe("Retained patient");
+  });
+  it("keeps the app M mark, selects English by default, and saves the chosen label language without rewriting text", async () => {
+    render(<App />);
+    expect(document.querySelector(".sidebar .brand-logo")?.textContent).toBe("m+");
+    expect(document.querySelector(".sidebar .hospital-brand")).toBeNull();
+    expect((screen.getByLabelText("Prescription language") as HTMLSelectElement).value).toBe("en");
+    await writeField("patient.name", "Synthetic language test");
+    await writeField("advice", "Keep this authored English advice.");
+    fireEvent.change(screen.getByLabelText("Prescription language"), { target: { value: "bn" } });
+    await waitFor(() => expect(fieldElement("patient.name").closest(".record-field")!.getAttribute("data-label")).toBe("নাম"));
+    expect(fieldElement("advice").textContent).toBe("Keep this authored English advice.");
+    fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
+    await waitFor(() => expect(Object.values(records)).toHaveLength(1));
+    expect(Object.values(records)[0].language).toBe("bn");
+    fireEvent.change(screen.getByLabelText("Prescription language"), { target: { value: "en" } });
+    await waitFor(() => expect(fieldElement("patient.name").closest(".record-field")!.getAttribute("data-label")).toBe("Name"));
+    expect(fieldElement("advice").textContent).toBe("Keep this authored English advice.");
+    fireEvent.click(screen.getByRole("button", { name: "Print" }));
+    const preview = within(screen.getByRole("dialog", { name: "Review the prescription" })).getByLabelText("Prescription preview");
+    expect(preview.querySelectorAll(".prescription-patient")).toHaveLength(1);
+    expect(preview.querySelector(".prescription-patient")!.textContent).toContain("Synthetic language test");
+    expect(preview.querySelector(".prescription-rx")!.textContent).toContain("Keep this authored English advice.");
   });
   it("opens the command menu with the keyboard and closes it with Escape", () => {
     render(<App />);

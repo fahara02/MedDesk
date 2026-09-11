@@ -25,6 +25,7 @@ import { MedicineLibrary } from "./components/MedicineLibrary";
 import { Studio } from "./components/DocumentStudio";
 import { appendMedicine, syncDocumentFields } from "./lib/document";
 import { Settings } from "./components/Settings";
+import { DesktopBridges } from "./components/DesktopBridges";
 import { Assistant } from "./components/Assistant";
 import {
   EvidenceWorkspace,
@@ -74,7 +75,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
   const [saving, setSaving] = useState(false),
     [lastSaved, setLastSaved] = useState("");
   const [modal, setModal] = useState<
-      "medicine" | "review" | "command" | "replace" | null
+      "medicine" | "review" | "command" | "replace" | "bridge" | null
     >(null),
     [command, setCommand] = useState("");
   const [pending, setPending] = useState<ConsultationInput | null>(null),
@@ -301,7 +302,8 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
             navigate("studio");
           }}
         >
-          <img className="hospital-brand" src={practice.logo} alt={practice.name} />
+          <span className="brand-logo">m<span>+</span></span>
+          <span>meddesk<span className="brand-sub">CLINICAL WORKSPACE</span></span>
         </a>
         <button
           className="practice-switch"
@@ -388,6 +390,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
+            <button className="button small bridge-install-trigger" onClick={() => setModal("bridge")}><Icon name="bluetooth" size={17} />Install Mi Band runner</button>
             {onLogout && <button className="sign-out-button" onClick={onLogout}>Sign out</button>}
             <select
               className="role-switch"
@@ -422,7 +425,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
             </button>
             <span className={`server-status ${band.online ? "online" : ""}`}>
               <i />
-              {band.online ? "Local server online" : "Server unavailable"}
+              {band.online ? "Server online" : "Server unavailable"}
             </span>
             <button
               className="icon-button"
@@ -591,6 +594,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
           </div>
         </Modal>
       )}
+      {modal === "bridge" && <Modal title="Install Mi Band runner" onClose={() => setModal(null)}><DesktopBridges band={band} /></Modal>}
       {modal === "medicine" && (
         <Modal title="Find a medicine" wide onClose={() => setModal(null)}>
           <MedicineLibrary

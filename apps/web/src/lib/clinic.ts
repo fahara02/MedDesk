@@ -66,6 +66,7 @@ export function newConsultation(): ConsultationInput {
   return {
     id: crypto.randomUUID(),
     revision: 0,
+    language: "en",
     patient: {
       id: crypto.randomUUID(),
       name: "",

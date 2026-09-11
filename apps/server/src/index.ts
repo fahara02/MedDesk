@@ -112,6 +112,11 @@ app.get("/api/assistant/status", (_request, response) =>
 app.get("/api/speech/voices", (_request, response) =>
   response.json(speech.status()),
 );
+app.get("/api/prescriber/signature", (_request, response) => {
+  response.sendFile(path.join(dataDirectory, "prescriber", "signature.jpg"), error => {
+    if (error && !response.headersSent) response.status(404).json({ error: "No saved signature is available." });
+  });
+});
 app.get("/api/audio-samples", async (_request, response) => response.json({ samples: await audioSamples.list() }));
 app.post("/api/audio-samples", express.raw({ type: "audio/*", limit: "8mb" }), async (request, response) => {
   response.status(201).json({ sample: await audioSamples.save(request.body, request.get("Content-Type") || "", request.get("X-Audio-Language")) });

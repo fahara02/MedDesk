@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import net from "node:net";
@@ -29,6 +29,9 @@ test(
     const origin = "https://medesk.lifeplusbd.tech";
     const proxy = { "X-MedDesk-Proxy": secret, Origin: origin };
     const passwordHash = await hashPassword("synthetic-test-password");
+    const signature = new Uint8Array([255,216,255,224]);
+    await mkdir(path.join(directory, "prescriber"));
+    await writeFile(path.join(directory, "prescriber", "signature.jpg"), signature);
     async function signIn() {
       const response = await fetch(base + "/api/auth/login", {
         method: "POST", headers: { ...proxy, "Content-Type": "application/json" },
@@ -87,7 +90,12 @@ test(
     try {
       await start();
       await request("/api/readings", undefined, proxy, 401);
+      await request("/api/prescriber/signature", undefined, proxy, 401);
       await signIn();
+      const signatureResponse = await fetch(base + "/api/prescriber/signature", { headers: proxy });
+      assert.equal(signatureResponse.status, 200);
+      assert.match(signatureResponse.headers.get("content-type"), /image\/jpeg/);
+      assert.deepEqual(new Uint8Array(await signatureResponse.arrayBuffer()), signature);
       await request("/api/readings", undefined, {}, 401);
       await request("/api/bridge/invites", { label: "Test PC" }, {}, 401);
       await request(

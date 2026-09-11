@@ -20,7 +20,8 @@ it("shows branded login before mounting patient data, then signs in and out with
   render(<SessionGate />);
   expect(screen.queryByText("Private workspace")).toBeNull();
   await waitFor(() => expect((screen.getByLabelText("Username") as HTMLInputElement).disabled).toBe(false));
-  expect(screen.getByAltText(/Labaid Cancer/)).toBeTruthy();
+  expect(screen.getByRole("link", { name: "MedDesk" })).toBeTruthy();
+  expect(screen.queryByAltText(/Labaid Cancer/)).toBeNull();
   fireEvent.change(screen.getByLabelText("Username"), { target: { value: "test-doctor" } });
   fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
   fireEvent.click(screen.getByRole("button", { name: "Show password" }));

@@ -11,12 +11,14 @@ project's 95 engineering tasks. This matrix does not alter that task denominator
 | Drug retrieval | Verified locally | FTS5, selected-product context, source hashes/URLs and actual nonempty excerpts. |
 | Working AI assistant | Verified remotely | Requested backend model responds successfully; HTTPS application test retrieved eight sources, cited source/document and preserved `0.500`. Model names are hidden in the UI. |
 | TTS | Verified remotely | Bengali synthesis returned a valid 156,450-byte WAV through the hosted API; exact source-text hash matched. |
-| Speech-to-text and audio samples | Implemented, microphone check pending | Dictate panel supports browser speech recognition, reviewed insertion and private sample recording/upload. Component lifecycle tests pass; the owner's sample has not arrived. |
-| Hospital and doctor branding | Deployed | Supplied LCH logo; Dr. A.F.M. Kamal Uddin from the supplied public profile. Registration remains blank because the profile supplies none. |
+| Speech-to-text and audio samples | Recovery fixes deployed; real microphone check pending | Speech errors unlock controls, pending requests can be canceled, capture status/time/bytes are visible at the top. Regression tests pass; zero samples received at 05:53 Dhaka. |
+| App and prescription branding | Deployed | Original MedDesk M restored in app/login; LCH on prescription only. Doctor name retained; no invented registration. |
+| Bangladesh prescription layout | Deployed | Patient strip at top, doctor header, left notes/right numbered Rx, footer signature. Editor and print share layout; visual pagination unverified. |
+| Prescription language selection | Deployed | English default; selectable English/Bangla labels and speech defaults; authored text unchanged. |
 | Model comparison | Text screening complete; audio pending | All 165 catalog entries classified; 92 text candidates tested, 14 responded and passed three synthetic checks. This is not a clinical quality ranking. |
-| Doctor signature placement | Verified locally | Drawing/upload, insertion and persistence. Cryptographic signing remains separate. |
+| Doctor signature placement | Deployed | Supplied white-background image verified over authenticated HTTPS and placed in Dr. Kamal Uddin's draft footer. Existing signatures and other doctors retained; certificate signing separate. |
 | Genuine `.lps` saving | Unfinished | Native implementation gaps remain; unsigned-draft versus authorized-export decision requested. See [export boundary](NATIVE-EXPORT.md). |
-| Installable Windows bridge | Packaged | 34 MB executable; setup/tray/autostart, DPAPI credentials; extraction check passes. Fresh-PC installation unverified. |
+| Installable Windows bridge | Website download verified | Visible install action, three-step setup, server address, code/copy and PC selection. Full hosted executable matches extraction-verified package. Fresh-PC installation unverified. |
 | Desktop → HTTPS → SSE | Synthetic integration verified | Actual Windows daemon tested for TLS upload failure, stable-ID retry and remote stop. Physical remote verification pending. |
 | Multiple PCs and offline behavior | Verified locally | Enrollment, revocation, per-PC selector, bounded durable queue and historical timestamps. |
 | Physical local Bluetooth dashboard | Verified | Server 8791; actual SSE-to-React test passed after graceful handover. |

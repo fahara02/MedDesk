@@ -8,6 +8,7 @@ export interface Patient {
   age: string;
   sex: string;
   reference: string;
+  address?: string;
 }
 
 export interface MedicationOrder {
@@ -26,11 +27,13 @@ export interface MedicationOrder {
 }
 
 export interface ConsultationInput {
+  language?: "en" | "bn";
   document?: DocumentNode;
   id: string;
   revision: number;
   patient: Patient;
-  clinician: { name: string; registration: string; clinic: string };
+  clinician: { name: string; registration: string; clinic: string;
+    qualifications?: string; designation?: string; address?: string; phone?: string };
   date: string;
   complaints: string;
   history: string;
@@ -97,6 +100,7 @@ export function parseConsultation(
   )
     return null;
   const { patient, clinician } = input;
+  if (input.language !== undefined && input.language !== "en" && input.language !== "bn") return null;
   if (
     !isRecord(patient) ||
     !validId(patient.id) ||
@@ -104,7 +108,7 @@ export function parseConsultation(
     (!allowUnnamed && !patient.name.trim()) ||
     !text(patient.age, 40) ||
     !text(patient.sex, 40) ||
-    !text(patient.reference, 100)
+    !text(patient.reference, 100) || (patient.address !== undefined && !text(patient.address, 400))
   )
     return null;
   if (
@@ -114,6 +118,8 @@ export function parseConsultation(
     !text(clinician.clinic, 400)
   )
     return null;
+  for (const key of ["qualifications", "designation", "address", "phone"])
+    if (clinician[key] !== undefined && !text(clinician[key], key === "phone" ? 100 : 400)) return null;
   if (
     typeof input.date !== "string" ||
     !/^\d{4}-\d{2}-\d{2}$/.test(input.date) ||
@@ -224,6 +230,7 @@ export function parseConsultation(
     }
   }
   const result: ConsultationInput = {
+    ...(input.language !== undefined ? { language: input.language as "en" | "bn" } : {}),
     ...(document ? { document } : {}),
     id: input.id,
     revision: input.revision as number,
@@ -233,11 +240,14 @@ export function parseConsultation(
       age: patient.age,
       sex: patient.sex,
       reference: patient.reference,
+      ...(patient.address !== undefined ? { address: patient.address as string } : {}),
     },
     clinician: {
       name: clinician.name,
       registration: clinician.registration,
       clinic: clinician.clinic,
+      ...Object.fromEntries(["qualifications", "designation", "address", "phone"]
+        .filter(key => clinician[key] !== undefined).map(key => [key, clinician[key] as string])),
     },
     date: input.date,
     complaints: input.complaints as string,

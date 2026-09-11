@@ -15,23 +15,28 @@ type SpeechWindow = Window & {
   webkitSpeechRecognition?: new () => Recognition;
 };
 
-export function DictationTool({ onInsert }: { onInsert: (text: string) => unknown }) {
-  const [language, setLanguage] = useState("bn-BD");
+export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInsert: (text: string) => unknown; initialLanguage?: string }) {
+  const [language, setLanguage] = useState(initialLanguage);
   const [text, setText] = useState("");
   const [interim, setInterim] = useState("");
   const [mode, setMode] = useState("idle");
   const [status, setStatus] = useState("Ready");
   const [sample, setSample] = useState<Blob | null>(null);
   const [sampleUrl, setSampleUrl] = useState("");
+  const [elapsed, setElapsed] = useState(0);
+  const [capturedBytes, setCapturedBytes] = useState(0);
+  const [microphone, setMicrophone] = useState("");
   const recognition = useRef<Recognition | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speechTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const upload = useRef<AbortController | null>(null);
   const version = useRef(0);
   const url = useRef("");
   const Constructor = (window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition;
   const busy = mode !== "idle";
+  const clearSpeechTimer = () => { if (speechTimer.current) clearTimeout(speechTimer.current); speechTimer.current = null; };
   const stopTracks = () => {
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
@@ -40,12 +45,19 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
   };
   useEffect(() => () => {
     version.current++;
+    clearSpeechTimer();
     recognition.current?.abort();
     if (recorder.current?.state === "recording") recorder.current.stop();
     stopTracks();
     upload.current?.abort();
     URL.revokeObjectURL(url.current);
   }, []);
+  useEffect(() => {
+    if (mode !== "recording") return;
+    const started = Date.now();
+    const tick = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(tick);
+  }, [mode]);
   const dictate = () => {
     if (!Constructor || busy) return;
     const session = ++version.current;
@@ -56,10 +68,17 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
     current.interimResults = true;
     const finalized = new Set<number>();
     let failed = false;
+    const fail = (message: string) => {
+      if (session !== version.current) return;
+      failed = true; version.current++; clearSpeechTimer();
+      recognition.current = null; setMode("idle"); setInterim(""); setStatus(message);
+      try { current.abort(); } catch {}
+    };
     setMode("starting");
     setStatus("Allow microphone access to start dictation.");
     current.onstart = () => {
       if (session !== version.current) return;
+      clearSpeechTimer();
       setMode("listening"); setStatus("Listening — speak your instructions.");
     };
     current.onresult = (event) => {
@@ -75,7 +94,6 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
     };
     current.onerror = (event) => {
       if (session !== version.current) return;
-      failed = true;
       const messages: Record<string, string> = {
         "not-allowed": "Microphone access was denied. Allow it in the browser's site settings.",
         "service-not-allowed": "This browser's speech service is unavailable. Try Chrome or record an audio sample.",
@@ -84,25 +102,28 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
         "no-speech": "No speech was detected. Start again when ready.",
         "language-not-supported": "The speech service does not support this language. Try another browser or record a sample.",
       };
-      setStatus(messages[event.error] || "Dictation stopped. Your recognized text is retained.");
-      setInterim("");
+      fail(messages[event.error] || `Dictation stopped (${event.error}). Your recognized text is retained.`);
     };
     current.onend = () => {
       if (session !== version.current) return;
+      clearSpeechTimer();
       recognition.current = null; setMode("idle"); setInterim("");
       if (!failed) setStatus("Dictation stopped. Review the words and numbers before inserting.");
     };
+    speechTimer.current = setTimeout(() => fail("The speech service did not start. Try again or record an audio sample below."), 20000);
     try { current.start(); }
-    catch { recognition.current = null; setMode("idle"); setStatus("Dictation could not start. Check microphone access."); }
+    catch { fail("Dictation could not start. Check microphone access."); }
   };
   const record = async () => {
     if (busy) return;
     const session = ++version.current;
     setMode("starting-recording"); setStatus("Allow microphone access to record your sample.");
+    setElapsed(0); setCapturedBytes(0); setMicrophone("");
     try {
       const input = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (session !== version.current) { input.getTracks().forEach((track) => track.stop()); return; }
       stream.current = input;
+      setMicrophone(input.getAudioTracks?.()[0]?.label || "Selected microphone");
       const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"].find((type) => MediaRecorder.isTypeSupported(type));
       const current = new MediaRecorder(input, mime ? { mimeType: mime } : undefined);
       recorder.current = current;
@@ -114,6 +135,7 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
         if (bytes > 8 * 1024 * 1024) {
           recordingFailed = true; if (current.state === "recording") current.stop(); setStatus("The sample exceeded 8 MB. Record a shorter sample.");
         } else chunks.push(event.data);
+        setCapturedBytes(bytes);
       };
       current.onerror = () => { recordingFailed = true; input.getTracks().forEach((track) => track.stop()); if (session === version.current) { stopTracks(); setMode("idle"); setStatus("Recording failed. Try your microphone again."); } };
       current.onstop = () => {
@@ -131,9 +153,17 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
       };
       current.start(1000); setMode("recording"); setStatus("Recording your sample — maximum 60 seconds.");
       timer.current = setTimeout(() => { if (current.state === "recording") current.stop(); }, 60000);
-    } catch {
+    } catch (error) {
       stopTracks();
-      if (session === version.current) { setMode("idle"); setStatus("Recording could not start. Allow microphone access and check your input device."); }
+      recorder.current = null;
+      const name = error instanceof Error ? error.name : "UnknownError";
+      const messages: Record<string, string> = {
+        NotAllowedError: "Microphone access was blocked. Check this site's permission and Windows microphone privacy settings.",
+        NotReadableError: "The microphone was allowed but could not be opened. Close another app using it or select another input in your browser settings.",
+        NotFoundError: "No microphone was found. Connect one and select it in your browser settings.",
+        NotSupportedError: "This browser could not record the audio format. Try an up-to-date Chrome or Edge browser.",
+      };
+      if (session === version.current) { setMode("idle"); setStatus(messages[name] || `Recording could not start (${name}). Check your microphone input.`); }
     }
   };
   const sendSample = async () => {
@@ -150,13 +180,25 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
   };
   return <div>
     <h3>Speech to text</h3>
+    <p role="status" className={mode === "recording" || mode === "listening" ? "dictation-recording" : "helper"}>{status}</p>
+    {mode === "recording" && <p className="dictation-recording">{microphone} · {elapsed}s / 60s · {Math.ceil(capturedBytes / 1024)} KB captured</p>}
     <p className="helper">Dictate, review the recognized words, then insert them at your cursor. Check medicine names, numbers and units.</p>
     <label className="field"><span>Spoken language</span><select value={language} disabled={busy} onChange={(event) => setLanguage(event.target.value)}>
       <option value="bn-BD">বাংলা · Bangladesh</option><option value="en-US">English</option><option value="bn-IN">বাংলা · India</option>
     </select></label>
     <div className="toolbar">
       <button className="button primary" disabled={busy || !Constructor} onClick={dictate}>Start dictation</button>
-      {(mode === "listening" || mode === "starting") && <button className="button" onClick={() => { setMode("stopping"); recognition.current?.stop(); }}>Stop dictation</button>}
+      {(mode === "listening" || mode === "starting") && <button className="button" onClick={() => {
+        const current = recognition.current;
+        setMode("stopping");
+        clearSpeechTimer();
+        speechTimer.current = setTimeout(() => {
+          version.current++; recognition.current = null; setMode("idle"); setInterim("");
+          setStatus("Dictation stopped. Review your captured text.");
+          try { current?.abort(); } catch {}
+        }, 2000);
+        try { current?.stop(); } catch { current?.abort(); }
+      }}>Stop dictation</button>}
     </div>
     {!Constructor && <p className="helper">Live speech recognition is unavailable in this browser. Use a supported Chrome browser or record a sample below.</p>}
     <p className="helper">Live dictation uses your browser's speech service, which may process audio online.</p>
@@ -167,9 +209,9 @@ export function DictationTool({ onInsert }: { onInsert: (text: string) => unknow
     <h4>Audio sample comparison</h4>
     <p className="helper">Record a short test phrase without patient details. Recording stays in this browser until you send it. Sending saves the sample privately for the requested model comparison.</p>
     <div className="toolbar"><button className="button" disabled={busy || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined"} onClick={() => void record()}>Record audio sample</button>
+      {mode === "starting-recording" && <button className="button" onClick={() => { version.current++; setMode("idle"); setStatus("Microphone request cancelled. You can try again."); }}>Cancel microphone request</button>}
       {mode === "recording" && <button className="button" onClick={() => recorder.current?.stop()}>Stop recording</button>}
     </div>
     {sampleUrl && <><audio className="dictation-audio" src={sampleUrl} controls aria-label="Your audio sample" /><button className="button primary full" disabled={busy} onClick={() => void sendSample()}>Send sample for comparison</button></>}
-    <p role="status" className={mode === "recording" || mode === "listening" ? "dictation-recording" : "helper"}>{status}</p>
   </div>;
 }

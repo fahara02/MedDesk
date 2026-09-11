@@ -15,6 +15,8 @@ import { SignatureTool } from "./SignatureTool";
 import { SpeechTool } from "./SpeechTool";
 import { DictationTool } from "./DictationTool";
 import { Letterhead } from "./Letterhead";
+import { practice } from "../lib/branding";
+import { loadSavedSignature } from "../lib/signature";
 import { Icon } from "./Icon";
 
 export function Studio({
@@ -60,7 +62,7 @@ export function Studio({
       content: initialDocument(draft),
       editorProps: {
         attributes: {
-          class: "prescription-document",
+          class: "prescription-document prescription-pad",
           role: "textbox",
           "aria-label": "Prescription document",
           "aria-multiline": "true",
@@ -99,7 +101,27 @@ export function Studio({
       editor.commands.setContent(document, { emitUpdate: false });
       lastChange.current = serialized;
     }
-  }, [draft.document, draft.id, editor]);
+  }, [draft.document, draft.id, draft.language, editor]);
+  useEffect(() => {
+    if (!editor || draft.synthetic || draft.clinician.name !== practice.clinician) return;
+    // The owner's saved image is part of this doctor's draft template.
+    // Existing signatures and other prescribers' documents are retained.
+    const abort = new AbortController();
+    void loadSavedSignature(abort.signal).then(src => {
+      if (!src || abort.signal.aborted || editor.isDestroyed || current.current.synthetic || current.current.clinician.name !== practice.clinician) return;
+      let signed = false;
+      editor.state.doc.descendants(node => { if (node.type.name === "signature") signed = true; });
+      if (signed) return;
+      editor.commands.insertContentAt(sectionPosition("footer"), {
+        type: "signature", attrs: {
+          src, signer: current.current.clinician.name,
+          registration: current.current.clinician.registration,
+          placedAt: new Date().toISOString(), width: 180, align: "right",
+        },
+      });
+    }).catch(() => {});
+    return () => abort.abort();
+  }, [editor, draft.id]);
   useEffect(() => {
     void api<{ medicineCatalog: { count: number } }>("/api/capabilities")
       .then((value) => setCount(value.medicineCatalog.count))
@@ -147,30 +169,30 @@ export function Studio({
           }
         : {}),
     };
-    let position = editor.state.selection.from;
+    let position = sectionPosition("rx");
     const parent = editor.state.selection.$from;
-    if (parent.parent.type.name === "recordField") {
-      position = parent.after(parent.depth);
-      if (
-        parent.depth > 1 &&
-        parent.node(parent.depth - 1).type.name === "medicationBlock"
-      )
-        position = parent.after(parent.depth - 1);
-    }
-    if (editor.state.selection.from <= 1)
-      editor.state.doc.descendants((node, pos) => {
-        if (
-          node.type.name === "heading" &&
-          node.textContent === "℞ Prescription"
-        )
-          position = pos + node.nodeSize;
-      });
+    for (let depth = parent.depth; depth > 0; depth--)
+      if (parent.node(depth).type.name === "medicationBlock") position = parent.after(depth);
     editor
       .chain()
       .focus()
       .insertContentAt(position, [medicineNode(item), { type: "paragraph" }])
       .run();
   };
+  function sectionPosition(kind: "rx" | "footer") {
+    if (!editor) return 0;
+    let position = editor.state.doc.content.size;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name !== "prescriptionSection" || node.attrs.kind !== kind) return;
+      position = pos + 1;
+      for (const child of node.children) {
+        if (child.type.name === "recordField" && ["advice", "nutrition", "followUp", "clinician.address", "clinician.phone"].includes(child.attrs.field)) break;
+        position += child.nodeSize;
+      }
+      return false;
+    });
+    return position;
+  }
   const insertBlocks = (content: DocumentNode[]) => {
     if (!editor) return false;
     const parent = editor.state.selection.$from;
@@ -182,6 +204,8 @@ export function Studio({
         )
       )
         position = parent.after(depth);
+      if (parent.node(depth).type.name === "prescriptionSection" && ["header", "patient"].includes(parent.node(depth).attrs.kind))
+        position = sectionPosition("rx");
     }
     return editor.chain().focus().insertContentAt(position, content).run();
   };
@@ -250,6 +274,12 @@ export function Studio({
           ↷
         </button>
         <span className="toolbar-divider" />
+        <select aria-label="Prescription language" value={draft.language || "en"} onChange={event => {
+          const next = { ...draft, language: event.target.value as "en" | "bn" };
+          update({ ...next, document: initialDocument(next) });
+        }}>
+          <option value="en">English</option><option value="bn">বাংলা</option>
+        </select>
         <select
           aria-label="Paragraph style"
           disabled={state?.recordField}
@@ -406,9 +436,10 @@ export function Studio({
             <span>14</span>
             <span>16</span>
           </div>
-          <div className="document-sheet" style={{ zoom: zoom / 100 }}>
-            {!draft.synthetic && <Letterhead />}
+          <div className="document-sheet prescription-sheet" lang={draft.language || "en"} style={{ zoom: zoom / 100 }}>
+            {!draft.synthetic && draft.clinician.clinic === practice.name && <Letterhead />}
             <EditorContent editor={editor} />
+            <div className="prescription-draft-note">{draft.synthetic ? "FICTIONAL EXAMPLE · NOT FOR PATIENT USE" : "Draft · prescriber review required"}</div>
           </div>
         </div>
         {toolsOpen && (
@@ -472,7 +503,7 @@ export function Studio({
                     ))}
                   </div>
                   <p className="helper">
-                    Product identity is inserted at your cursor. Write the dose
+                    Product identity is added to the Rx column. Write the dose
                     and instructions directly in the document.
                   </p>
                   <button className="text-link" onClick={onDevices}>
@@ -496,11 +527,13 @@ export function Studio({
               )}
               {tool === "speech" && (
                 <SpeechTool
+                  key={draft.language || "en"}
+                  language={draft.language || "en"}
                   text={documentText(editor.getJSON() as DocumentNode)}
                 />
               )}
               {tool === "dictation" && (
-                <DictationTool key={draft.id} onInsert={(text) =>
+                <DictationTool key={draft.id + (draft.language || "en")} initialLanguage={draft.language === "bn" ? "bn-BD" : "en-US"} onInsert={(text) =>
                   editor.chain().focus().insertContent({ type: "text", text }).run()
                 } />
               )}
@@ -508,7 +541,7 @@ export function Studio({
                 <SignatureTool
                   disabled={!draft.clinician.name.trim()}
                   onPlace={(src) =>
-                    insertBlocks([
+                    editor.chain().focus().insertContentAt(sectionPosition("footer"), [
                       {
                         type: "signature",
                         attrs: {
@@ -521,7 +554,7 @@ export function Studio({
                         },
                       },
                       { type: "paragraph" },
-                    ])
+                    ]).run()
                   }
                 />
               )}

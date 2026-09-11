@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/clinic";
+import { workspaceFetch } from "../lib/session";
 import type { useBand } from "../lib/useBand";
 
 interface Device {
@@ -17,6 +18,28 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
   } | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const download = useRef<AbortController | null>(null);
+  useEffect(() => () => download.current?.abort(), []);
+  const getInstaller = async () => {
+    if (downloading) return;
+    const abort = new AbortController(); download.current = abort;
+    setDownloading(true); setError("");
+    try {
+      const response = await workspaceFetch("/downloads/MedDesk-Bridge-Setup.exe", { signal: abort.signal });
+      if (!response.ok) throw new Error(response.status === 401 ? "Sign in again to download the installer." : "The installer could not be downloaded. Please try again.");
+      const blob = await response.blob();
+      if (blob.size < 1024 || response.headers.get("content-type")?.includes("text/html")) throw new Error("The server did not return the Windows installer.");
+      const href = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = href; link.download = "MedDesk-Bridge-Setup.exe";
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 60000);
+      if (!abort.signal.aborted) setDownloaded(true);
+    } catch (e) { if (!abort.signal.aborted) setError((e as Error).message); }
+    finally { if (!abort.signal.aborted) setDownloading(false); }
+  };
   useEffect(() => {
     let active = true;
     const refresh = () => {
@@ -65,7 +88,34 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
   };
   return (
     <section className="desktop-bridges">
-      <h3>Desktop Bluetooth bridge</h3>
+      <h3>Connect your Mi Band to this website</h3>
+      <p className="helper">Install once on a Windows 10 or 11 PC with Bluetooth. Keep that PC near the band; readings are forwarded every 10 seconds while you are signed in to Windows.</p>
+      <div className="bridge-setup-step">
+        <h4>1. Download and open the installer</h4>
+        <a className="button primary full" href="/downloads/MedDesk-Bridge-Setup.exe" download="MedDesk-Bridge-Setup.exe" aria-disabled={downloading} onClick={event => { event.preventDefault(); void getInstaller(); }}>
+          {downloading ? "Downloading installer…" : "Download Windows installer"}
+        </a>
+        <p className="helper">Windows x64 · Includes the runner · No Node.js or Python installation needed.</p>
+        {downloaded && <p role="status">Download ready. Open <strong>MedDesk-Bridge-Setup.exe</strong> from your browser’s Downloads to install.</p>}
+      </div>
+      <div className="bridge-setup-step">
+      <h4>2. Link this computer</h4>
+      <label className="field"><span>Server address</span><input readOnly value={window.location.origin} onFocus={event => event.target.select()} /></label>
+      <label className="field"><span>Computer name</span><input value={label} onChange={event => setLabel(event.target.value)} placeholder="Consultation room PC" maxLength={80} /></label>
+      <button className="button secondary full" disabled={busy || !label.trim()} onClick={() => void enroll()}>Create enrollment code</button>
+      {invite && <div className="notice">
+        <p>Paste this one-use code into the installer:</p>
+        <code style={{ overflowWrap: "anywhere", userSelect: "all" }}>{invite.code}</code>
+        <button className="button small" onClick={() => {
+          if (!navigator.clipboard) { setError("Select and copy the code above."); return; }
+          void navigator.clipboard.writeText(invite.code).then(() => setCopied(true)).catch(() => setError("Select and copy the code above."));
+        }}>{copied ? "Code copied" : "Copy enrollment code"}</button>
+        <p>Expires {new Date(invite.expiresAt).toLocaleTimeString()}. Create a new code if it expires.</p>
+      </div>}
+      <p className="helper">In the installer, enter the band’s Bluetooth address and authentication key. The key stays encrypted on that PC.</p>
+      </div>
+      <div className="bridge-setup-step">
+      <h4>3. Select your PC and start monitoring</h4>
       <label>
         Readings from
         <select
@@ -73,7 +123,7 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
           value={band.bridgeId}
           onChange={(event) => band.selectBridge(event.target.value)}
         >
-          <option value="">This server's Bluetooth</option>
+          <option value="">{band.native?.available && !band.bridgeId ? "This server's Bluetooth" : "Select an installed computer"}</option>
           {devices
             .filter((d) => !d.revoked)
             .map((d) => (
@@ -83,41 +133,8 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
             ))}
         </select>
       </label>
-      <p className="helper">
-        Install the bridge on the Windows PC paired with your band. It sends
-        readings to this website while you are signed in to Windows.
-      </p>
-      <a
-        className="button secondary full"
-        href="/downloads/MedDesk-Bridge-Setup.exe"
-      >
-        Download Windows installer
-      </a>
-      <label>
-        Computer name
-        <input
-          value={label}
-          onChange={(event) => setLabel(event.target.value)}
-          placeholder="Consultation room PC"
-          maxLength={80}
-        />
-      </label>
-      <button
-        className="button secondary full"
-        disabled={busy || !label.trim()}
-        onClick={() => void enroll()}
-      >
-        Create enrollment code
-      </button>
-      {invite && (
-        <div className="notice">
-          <p>Enter this one-use code in the installer:</p>
-          <code style={{ overflowWrap: "anywhere", userSelect: "all" }}>
-            {invite.code}
-          </code>
-          <p>Expires {new Date(invite.expiresAt).toLocaleTimeString()}.</p>
-        </div>
-      )}
+      {!devices.some(device => !device.revoked) && <p className="helper">Waiting for your first computer. This list refreshes every 10 seconds after installation.</p>}
+      {band.bridgeId && <><p className="helper">{band.native?.message || "Checking the selected computer…"}</p><button className="button primary full" disabled={!band.native?.available || band.native.running} onClick={() => void band.startNative()}>Start monitoring</button></>}
       {band.bridgeId && (
         <button
           className="button subtle full"
@@ -132,6 +149,7 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
           {error}
         </p>
       )}
+      </div>
     </section>
   );
 }

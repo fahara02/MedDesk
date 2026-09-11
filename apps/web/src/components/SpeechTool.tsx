@@ -2,7 +2,7 @@ import { workspaceFetch } from "../lib/session";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/clinic";
 import type { SpeechVoice } from "../../../server/src/speech";
-export function SpeechTool({ text }: { text: string }) {
+export function SpeechTool({ text, language = "en" }: { text: string; language?: "en" | "bn" }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]),
     [windows, setWindows] = useState<SpeechVoice[]>([]),
     [selected, setSelected] = useState(""),
@@ -48,7 +48,6 @@ export function SpeechTool({ text }: { text: string }) {
   }, [available]);
   useEffect(() => {
     if (selected) return;
-    const language = bengali ? "bn" : "en";
     const local = windows.find((voice) =>
       voice.language.toLowerCase().startsWith(language),
     );
@@ -57,7 +56,7 @@ export function SpeechTool({ text }: { text: string }) {
     );
     if (local) setSelected("windows:" + local.name);
     else if (browser) setSelected("browser:" + browser.voiceURI);
-  }, [windows, voices, bengali, selected]);
+  }, [windows, voices, language, selected]);
   useEffect(() => {
     generation.current++;
     if (available) speechSynthesis.cancel();

@@ -2,7 +2,34 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DictationTool } from "./DictationTool";
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
+
+it("unlocks capture after a speech service error even when the browser never emits end", () => {
+  let recognition: any;
+  vi.stubGlobal("SpeechRecognition", class {
+    onstart: any; onerror: any;
+    constructor() { recognition = this; }
+    start() { this.onstart(); } abort() {}
+  });
+  render(<DictationTool onInsert={vi.fn()} />);
+  fireEvent.click(screen.getByText("Start dictation"));
+  act(() => recognition.onerror({ error: "network" }));
+  expect((screen.getByText("Start dictation") as HTMLButtonElement).disabled).toBe(false);
+  expect(screen.getByRole("status").textContent).toMatch(/speech service could not connect/);
+});
+
+it("allows cancellation while permission is pending and releases a late microphone", async () => {
+  let grant: any;
+  const stop = vi.fn();
+  vi.stubGlobal("MediaRecorder", class { static isTypeSupported() { return true; } });
+  Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: () => new Promise(resolve => { grant = resolve; }) } });
+  render(<DictationTool onInsert={vi.fn()} />);
+  fireEvent.click(screen.getByText("Record audio sample"));
+  fireEvent.click(screen.getByText("Cancel microphone request"));
+  await act(async () => grant({ getTracks: () => [{ stop }] }));
+  expect(stop).toHaveBeenCalledOnce();
+  expect((screen.getByText("Record audio sample") as HTMLButtonElement).disabled).toBe(false);
+});
 
 it("retains exact finalized dictation once, requires insertion, and ignores callbacks after unmount", () => {
   let recognition: any;
@@ -14,6 +41,8 @@ it("retains exact finalized dictation once, requires insertion, and ignores call
   });
   const insert = vi.fn();
   const { unmount } = render(<DictationTool onInsert={insert} />);
+  expect((screen.getByLabelText("Spoken language") as HTMLSelectElement).value).toBe("en-US");
+  fireEvent.change(screen.getByLabelText("Spoken language"), { target: { value: "bn-BD" } });
   fireEvent.click(screen.getByText("Start dictation"));
   expect(recognition.lang).toBe("bn-BD");
   const first = { isFinal: true, 0: { transcript: "0.500 mg প্রতিদিন" } };
@@ -63,6 +92,6 @@ it("records locally and uploads only after an explicit send", async () => {
   expect(stop).toHaveBeenCalledOnce(); expect(fetch).not.toHaveBeenCalled();
   await act(async () => fireEvent.click(screen.getByText("Send sample for comparison")));
   expect(fetch).toHaveBeenCalledOnce();
-  expect(fetch).toHaveBeenCalledWith("/api/audio-samples", expect.objectContaining({ headers: expect.objectContaining({ "X-Audio-Language": "bn-BD" }) }));
+  expect(fetch).toHaveBeenCalledWith("/api/audio-samples", expect.objectContaining({ headers: expect.objectContaining({ "X-Audio-Language": "en-US" }) }));
   expect(screen.getByText(/Sample received: sample-test/)).toBeTruthy();
 });

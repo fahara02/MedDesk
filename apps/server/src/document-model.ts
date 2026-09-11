@@ -28,6 +28,7 @@ const nodeTypes = new Set([
   "recordField",
   "medicationBlock",
   "signature",
+  "prescriptionSection",
 ]);
 const markTypes = new Set([
   "bold",
@@ -43,9 +44,14 @@ const fields = new Set([
   "patient.age",
   "patient.sex",
   "patient.reference",
+  "patient.address",
   "clinician.name",
   "clinician.registration",
   "clinician.clinic",
+  "clinician.qualifications",
+  "clinician.designation",
+  "clinician.address",
+  "clinician.phone",
   "date",
   "complaints",
   "history",
@@ -199,8 +205,10 @@ export function parseDocument(value: unknown): DocumentNode | null {
     "recordField",
     "medicationBlock",
     "signature",
+    "prescriptionSection",
   ]);
   const inline = new Set(["text", "hardBreak"]);
+  const seenSections = new Set<string>();
   const seenFields = new Set<string>(),
     seenMedicines = new Set<string>();
   function valid(node: DocumentNode, parent: string, scope: string): boolean {
@@ -214,6 +222,15 @@ export function parseDocument(value: unknown): DocumentNode | null {
     if (["hardBreak", "horizontalRule", "signature"].includes(node.type))
       return children.length === 0;
     if (node.type === "doc" && parent) return false;
+    if (node.type === "prescriptionSection") {
+      const kind = String(node.attrs?.kind);
+      if (!["header", "patient", "body", "notes", "rx", "footer"].includes(kind) || seenSections.has(kind)) return false;
+      seenSections.add(kind);
+      if (["notes", "rx"].includes(kind) ? parent !== "prescriptionSection" : parent !== "doc") return false;
+      if (kind === "body") {
+        if (children.length !== 2 || children[0].attrs?.kind !== "notes" || children[1].attrs?.kind !== "rx" || children.some(child => child.type !== "prescriptionSection")) return false;
+      } else if (children.some(child => child.type === "prescriptionSection")) return false;
+    }
     if (node.type === "medicationBlock") {
       const id = String(node.attrs?.id || "");
       if (!/^[0-9a-f-]{36}$/i.test(id) || seenMedicines.has(id)) return false;

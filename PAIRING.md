@@ -39,11 +39,13 @@ Open `.env` in your MedDesk checkout (currently `E:\MedDesk\.env`) and use this 
 ```dotenv
 ACCOUNT_METHOD=xiaomi
 EMAIL=your-xiaomi-account@example.com
-PASSWORD=your-xiaomi-account-password
+XIAOMI_PASSWORD=your-xiaomi-account-password
 ```
 
 `xiaomi` selects the existing Xiaomi implementation. `amazfit` is a separate
 Zepp route and is not the owner's current pipeline.
+If `.env` also contains Gmail's `PASSWORD`, leave it intact. The wrapper only
+passes `XIAOMI_PASSWORD` to the extractor, inside its child process environment.
 
 ## Step 3: extract the Bluetooth auth key
 
@@ -54,12 +56,26 @@ uv sync --project huami-token --frozen --no-dev
 .\get-band-key.ps1
 ```
 
+If `uv` and the package are already installed, run only `.\get-band-key.ps1`.
+The native command is also available, and prompts privately for the Xiaomi
+password when `--password` is omitted:
+
+```powershell
+uv run --no-sync --project huami-token huami-token --method xiaomi --email your-xiaomi-account@example.com --bt_keys
+```
+
 The result should show a MAC address and an auth key beginning with `0x`. Copy the auth key. Do not send it in chat or publish it.
 
 If authentication fails, inspect the specific Xiaomi error and whether an
 interactive verification step is required. A `401` alone does not identify the
 account type. If there are no linked devices, verify the existing phone app,
 account, model and device binding before selecting another extraction route.
+
+The current account returned an interactive verification link while the utility
+reported "Missing ssecurity or location in auth response". Complete the Xiaomi
+check using the private link saved in `tmp/xiaomi-verification-url.txt`, then
+retry the wrapper. That file is local and ignored by Git; it is not supplied
+with a fresh checkout, and its link can expire.
 
 ## Step 4: prepare Bluetooth on this PC
 

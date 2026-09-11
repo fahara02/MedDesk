@@ -33,7 +33,8 @@ To test the full dashboard and server without a band, click **Preview with demo 
 
 Keep the account and app already associated with your band. The owner's current
 route is Xiaomi: use `ACCOUNT_METHOD=xiaomi`, the Xiaomi account email address,
-and its Xiaomi password in `.env`. A Gmail address can identify the Xiaomi
+and `XIAOMI_PASSWORD` in `.env`. Gmail's separate `PASSWORD` entry is never used
+by the wrapper. A Gmail address can identify the Xiaomi
 account, but being signed into Gmail does not authenticate this extractor.
 The wrapper reads the password internally instead of placing it on the process
 command line:

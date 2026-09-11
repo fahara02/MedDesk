@@ -94,15 +94,32 @@ The owner clarified that Xiaomi is the existing account pipeline and supplied
 `.env`. Its method was still `amazfit`; only that entry was changed to `xiaomi`,
 preserving the other entries. The bundled extractor's environment was installed
 with `uv sync --frozen --no-dev`. No new Python implementation was written.
-Login has not been attempted while clarification is pending about whether the
-PASSWORD value authenticates Xiaomi or only Gmail. Never transmit a Gmail-only
-password to Xiaomi. The dashboard now says Band auth key instead of Zepp auth key.
+The owner clarified that PASSWORD belongs to Gmail and XIAOMI_PASSWORD belongs
+to Xiaomi. The wrapper now requires XIAOMI_PASSWORD and maps it into only the
+extractor child process; it never falls back to Gmail's PASSWORD. The actual
+`.env` credentials were preserved. The dashboard now says Band auth key instead
+of Zepp auth key.
 The extractor's help command now runs successfully and lists both account methods.
 The entire bundled README and ten-page `miband5_maruf.pdf` were read: README's
 Xiaomi login section uses `--method xiaomi`; PDF pages 2-5 describe the separate
 Zepp Life / `--method amazfit` route. Neither document establishes that signing
 into Gmail supplies a Xiaomi session or Bluetooth key. PDF page 8's seven UUIDs
 match the corresponding addresses in MedDesk's protocol module.
+
+`uv run --no-sync --project huami-token huami-token --help` succeeds using the
+owner's existing installation. A Xiaomi login attempt reached the provider but
+the extractor stopped with "Missing ssecurity or location in auth response".
+A one-shot integration check confirmed HTTP 200, response code 0, no ssecurity
+or location, and a notificationUrl on https://account.xiaomi.com. The private
+verification link is saved in ignored `tmp/xiaomi-verification-url.txt`; the
+owner must complete that interactive step before retrying. This is not evidence
+that a band key was returned or that Bluetooth authentication succeeded.
+No further login retries should run while that verification is pending.
+
+Credential-routing checks passed for distinct provider passwords, exact quoted
+password preservation, absence of passwords in process arguments, refusal when
+XIAOMI_PASSWORD is missing, and refusal of an alternate account method. The
+wrapper also supports `-CheckConfiguration` without making a network request.
 
 Consultation-model, consultation-storage and medicine-catalog modules remain
 uncommitted work from before this clarification. They are not wired into the

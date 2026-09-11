@@ -212,7 +212,7 @@ export default function App() {
             </div>
           </div>
 
-          <label htmlFor="auth-key">Zepp auth key</label>
+          <label htmlFor="auth-key">Band auth key</label>
           <div className="key-input">
             <input
               id="auth-key"
@@ -227,7 +227,7 @@ export default function App() {
               {showKey ? "Hide" : "Show"}
             </button>
           </div>
-          <p className="field-help">Use the key from get-band-key.ps1 after pairing in Zepp Life with a Zepp email account. Do not paste your password here.</p>
+          <p className="field-help">Use the band’s 32-character Bluetooth key. For your Xiaomi account, get-band-key.ps1 uses ACCOUNT_METHOD=xiaomi in .env. An account password is not a Bluetooth key.</p>
           <p className="field-help" role="status">{bluetoothStatus}</p>
 
           {phase === "connected" ? (
@@ -253,7 +253,7 @@ export default function App() {
           <div className="checklist">
             <p>Before connecting</p>
             <div><CheckIcon /> Wear the band snugly</div>
-            <div><CheckIcon /> Close Zepp Life and Gadgetbridge</div>
+            <div><CheckIcon /> Release the band from the phone’s Bluetooth</div>
             <div><CheckIcon /> Turn on Windows Bluetooth</div>
           </div>
         </aside>

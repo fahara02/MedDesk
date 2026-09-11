@@ -2,7 +2,7 @@
 
 There are three separate links in this setup:
 
-1. **Mi Band 5 → Zepp Life on the phone:** creates and uploads the band-specific Bluetooth auth key.
+1. **Band → its existing phone app and account:** establishes the band-specific Bluetooth auth key.
 2. **Mi Band 5 → Chrome/Edge on the PC:** the React app uses Web Bluetooth and that key to authenticate directly with the band.
 3. **React app → local Node server:** readings are posted to the server and stored in `data/readings.jsonl`.
 
@@ -10,49 +10,56 @@ The Mi Band does not connect to Node directly in this build. Chrome or Edge owns
 
 ## What your Xiaomi account changes
 
-Mi Band 5 belongs to the older Huami-made band family. Pair it through **Zepp Life**, which uses the Zepp backend. The `xiaomi` method in `huami-token` targets Xiaomi/Mi Fitness accounts and did not authenticate with the account currently in `.env`.
+The owner already uses a Xiaomi account registered with a Gmail address. Keep
+that account and test the bundled extractor's Xiaomi route first. The earlier
+instruction to create a new Zepp account was an assumption, not a verified
+requirement for this account.
 
-Use a Zepp account created with an email address and password. Do not choose **Sign in with Xiaomi**, **Sign in with Google**, or another social-login button because the key extractor needs a direct Zepp email/password login.
+The extractor's current Xiaomi route authenticates against Xiaomi and queries
+Mi Fitness bound-device records. An older band's key may be held by a different
+service even when the login identity is Xiaomi. Account login success and a
+returned key for the correct band are separate checks. Do not reset or unpair
+the band to work around an empty device list.
 
-If your band is new and not paired yet, continue with Step 1. If you already paired it through a Xiaomi login and do not need to preserve its current history, unpair it from the vendor app, factory-reset it once, and then follow Step 1 with the Zepp account. A reset or unpair invalidates any old auth key.
+## Step 1: identify the existing band and account
 
-## Step 1: pair the band with Zepp Life
+1. Keep the band charged and its current pairing intact.
+2. Confirm the exact band model and the phone app that currently displays it.
+3. Confirm which Xiaomi account that app uses. A Gmail address is an account
+   identifier; the Gmail browser session is not the extractor's Xiaomi session.
+4. Use the password that actually signs into Xiaomi. If Xiaomi uses Google
+   sign-in instead, complete the appropriate Xiaomi account login flow before
+   attempting the password-based extractor. Do not send a Gmail-only password
+   to Xiaomi or a different vendor.
 
-1. Charge the Mi Band 5 and keep it within one metre of the phone.
-2. On Android, install **Zepp Life** from Google Play. Do not use Mi Fitness for this band.
-3. Open Zepp Life and choose **Create account** or **Sign up with email**.
-4. Create a Zepp account with an email address and password, then complete email verification.
-5. In Zepp Life, open **Profile → Add device → Band**.
-6. Allow the requested Bluetooth and nearby-device permissions.
-7. Select the Mi Band 5. Tap the check mark on the band when it asks for confirmation.
-8. Wait until Zepp Life displays the band's battery and step count. Allow any offered firmware update to finish.
-9. Leave the band bound to this account. Do not unpair it and do not factory-reset it again.
-
-## Step 2: put the Zepp credentials in `.env`
+## Step 2: configure the existing Xiaomi account in `.env`
 
 Open `.env` in your MedDesk checkout (currently `E:\MedDesk\.env`) and use this shape:
 
 ```dotenv
-ACCOUNT_METHOD=amazfit
-EMAIL=your-zepp-account@example.com
-PASSWORD=your-zepp-password
+ACCOUNT_METHOD=xiaomi
+EMAIL=your-xiaomi-account@example.com
+PASSWORD=your-xiaomi-account-password
 ```
 
-`amazfit` is the method name used by the extractor for the Zepp backend; it is also correct for Zepp Life and Mi Band 5.
+`xiaomi` selects the existing Xiaomi implementation. `amazfit` is a separate
+Zepp route and is not the owner's current pipeline.
 
 ## Step 3: extract the Bluetooth auth key
 
 From PowerShell in your MedDesk checkout, run:
 
 ```powershell
+uv sync --project huami-token --frozen --no-dev
 .\get-band-key.ps1
 ```
 
 The result should show a MAC address and an auth key beginning with `0x`. Copy the auth key. Do not send it in chat or publish it.
 
-If it says `401` or cannot find tokens, the account is still a Xiaomi/social-login account rather than a direct Zepp email/password account. Confirm that the same email/password can sign into Zepp Life directly.
-
-If it says no linked devices, return to Zepp Life and make sure the band is visible, connected, and fully synced under that exact account.
+If authentication fails, inspect the specific Xiaomi error and whether an
+interactive verification step is required. A `401` alone does not identify the
+account type. If there are no linked devices, verify the existing phone app,
+account, model and device binding before selecting another extraction route.
 
 ## Step 4: prepare Bluetooth on this PC
 
@@ -92,9 +99,9 @@ The header should say **Local server online**. You can click **Preview with demo
 
 ## Step 6: connect the band from the dashboard
 
-1. Fully close Zepp Life and Gadgetbridge on the phone. Temporarily turning off the phone's Bluetooth is the most reliable way to release the band.
+1. Temporarily turn off the phone's Bluetooth to release its connection to the band.
 2. Wear the band snugly so its heart-rate sensor touches the skin.
-3. Paste the `0x…` auth key into **Zepp auth key** on the MedDesk page.
+3. Paste the `0x…` auth key into **Band auth key** on the MedDesk page.
 4. Click **Connect Mi Band 5**. This click is required by browser Bluetooth security.
 5. In the Chrome/Edge chooser, select **Mi Smart Band 5**, **Mi Band 5**, or the device whose name starts with `Mi`.
 6. Click **Pair** or **Connect** in the chooser. Confirm on the band if it displays a check mark.
@@ -119,7 +126,7 @@ documented in [Gadgetbridge's Xiaomi device guide](https://gadgetbridge.org/gadg
 ### The browser does not list the band
 
 - Confirm Windows now has a working Bluetooth toggle.
-- Close Zepp Life and Gadgetbridge, and turn off the phone's Bluetooth temporarily.
+- Turn off the phone's Bluetooth temporarily to release its active band connection.
 - On the band, use **More → Settings → Reboot**. Do not choose factory reset.
 - Reload `http://localhost:8787` and click Connect again.
 

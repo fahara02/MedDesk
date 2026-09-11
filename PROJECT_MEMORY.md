@@ -13,7 +13,11 @@ This file records the implementation state needed to continue the project on ano
 ## Important decisions
 
 - The browser owns the Bluetooth connection. The Node.js server stores and distributes readings; it does not open Bluetooth itself.
-- Mi Band 5 must first be bound through Zepp Life using a direct Zepp email/password account. Xiaomi and social-login credentials do not work with the current key-extraction route.
+- The owner uses an existing Xiaomi account whose email address is Gmail. Do not
+  require a new Amazfit/Zepp account. The bundled extractor has a Xiaomi
+  email/password route using `ACCOUNT_METHOD=xiaomi`; whether that route returns
+  this particular band's key must be verified. A Gmail browser session does not
+  authenticate the extractor, and the supplied password must belong to Xiaomi.
 - The 16-byte band auth key stays in the browser tab and is never posted to the server.
 - Do not unpair or factory-reset the band after extracting its key because that invalidates the key.
 - Sleep history is not implemented because it requires proprietary activity-history synchronization and classification.
@@ -29,7 +33,7 @@ npm ci
 Copy-Item .env.example .env
 ```
 
-Fill `.env` with the direct Zepp account as described in `PAIRING.md`, then extract the key:
+Fill `.env` with the existing Xiaomi account as described in `PAIRING.md`, then extract the key:
 
 ```powershell
 .\get-band-key.ps1
@@ -42,7 +46,7 @@ npm run build
 npm start
 ```
 
-Then open `http://localhost:8787`, close Zepp Life or disable the phone's Bluetooth temporarily, paste the auth key, and click **Connect Mi Band 5**. The browser must be allowed to open its device chooser.
+Then open `http://localhost:8787`, disable the phone's Bluetooth temporarily, paste the auth key, and click **Connect Mi Band 5**. The browser must be allowed to open its device chooser.
 
 ## Last known state
 
@@ -83,3 +87,24 @@ Then open `http://localhost:8787`, close Zepp Life or disable the phone's Blueto
 - Never commit `.env`, a band auth key, `data/readings.jsonl`, or account credentials.
 - The vendored `huami-token` logging was adjusted so authentication payloads containing credentials or tokens are not written to debug logs.
 - Rotate any account password or access token that has previously appeared in terminal or chat output.
+
+## Account correction — 12 September 2026
+
+The owner clarified that Xiaomi is the existing account pipeline and supplied
+`.env`. Its method was still `amazfit`; only that entry was changed to `xiaomi`,
+preserving the other entries. The bundled extractor's environment was installed
+with `uv sync --frozen --no-dev`. No new Python implementation was written.
+Login has not been attempted while clarification is pending about whether the
+PASSWORD value authenticates Xiaomi or only Gmail. Never transmit a Gmail-only
+password to Xiaomi. The dashboard now says Band auth key instead of Zepp auth key.
+The extractor's help command now runs successfully and lists both account methods.
+The entire bundled README and ten-page `miband5_maruf.pdf` were read: README's
+Xiaomi login section uses `--method xiaomi`; PDF pages 2-5 describe the separate
+Zepp Life / `--method amazfit` route. Neither document establishes that signing
+into Gmail supplies a Xiaomi session or Bluetooth key. PDF page 8's seven UUIDs
+match the corresponding addresses in MedDesk's protocol module.
+
+Consultation-model, consultation-storage and medicine-catalog modules remain
+uncommitted work from before this clarification. They are not wired into the
+running app. Resume them after the current band/account step; preserve the added
+medicine CSVs and the associated dependency changes.

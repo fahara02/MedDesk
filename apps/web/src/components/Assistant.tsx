@@ -61,13 +61,16 @@ export function Assistant({
         body: JSON.stringify({ question, draft }),
         signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       setAnswer(value);
       setSnapshot(submitted);
     } catch (error) {
       if (!controller.signal.aborted) setError((error as Error).message);
     } finally {
-      setBusy(false);
-      pending.current = null;
+      if (pending.current === controller) {
+        setBusy(false);
+        pending.current = null;
+      }
     }
   };
   return (

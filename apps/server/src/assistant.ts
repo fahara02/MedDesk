@@ -12,34 +12,36 @@ export class PrescriptionAssistant {
   constructor(
     private readonly envFile: string,
     private readonly index: DrugIndex,
+    private readonly environment: NodeJS.ProcessEnv = process.env,
   ) {}
   async initialize() {
-    try {
-      const env = parseEnv(await readFile(this.envFile, "utf8"));
-      const key =
-        process.env.MEDDESK_QWEN_API_KEY ||
-        env.DASHSCOPE_API_KEY ||
-        env.ALIBABA_API_KEY;
-      const base =
-        process.env.MEDDESK_QWEN_BASE_URL ||
-        env.LUNA__LLM__CHAT_BASE_URL ||
-        env.LUNA__LLM__BASE_URL;
-      const model =
-        process.env.MEDDESK_QWEN_MODEL ||
-        env.LUNA__LLM__CHAT_MODEL ||
-        env.LUNA__LLM__MODEL;
-      if (
-        key &&
-        base &&
-        model &&
-        /^https:\/\/dashscope(?:-intl|-us)?\.aliyuncs\.com\/compatible-mode\/v1\/?$/.test(
-          base,
-        )
+    const content = await readFile(this.envFile, "utf8").catch((error) => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return "";
+      throw error;
+    });
+    const env = parseEnv(content);
+    this.config = undefined;
+    const key =
+      this.environment.MEDDESK_QWEN_API_KEY ||
+      env.DASHSCOPE_API_KEY ||
+      env.ALIBABA_API_KEY;
+    const base =
+      this.environment.MEDDESK_QWEN_BASE_URL ||
+      env.LUNA__LLM__CHAT_BASE_URL ||
+      env.LUNA__LLM__BASE_URL;
+    const model =
+      this.environment.MEDDESK_QWEN_MODEL ||
+      env.LUNA__LLM__CHAT_MODEL ||
+      env.LUNA__LLM__MODEL;
+    if (
+      key &&
+      base &&
+      model &&
+      /^https:\/\/dashscope(?:-intl|-us)?\.aliyuncs\.com\/compatible-mode\/v1\/?$/.test(
+        base,
       )
-        this.config = { key, base: base.replace(/\/$/, ""), model };
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
+    )
+      this.config = { key, base: base.replace(/\/$/, ""), model };
   }
   status() {
     return {
@@ -78,6 +80,11 @@ export class PrescriptionAssistant {
           ...draft,
           patient: { age: draft.patient.age, sex: draft.patient.sex },
         });
+    if (text.length > 30000)
+      throw new ClinicError(
+        "This document exceeds the assistant’s 30,000-character context limit. No partial document was sent.",
+        413,
+      );
     const hash = createHash("sha256")
       .update(JSON.stringify(draft))
       .digest("hex");
@@ -107,7 +114,7 @@ export class PrescriptionAssistant {
               role: "user",
               content: JSON.stringify({
                 question: input.question,
-                document: text.slice(0, 30000),
+                document: text,
                 sources,
               }),
             },
@@ -117,9 +124,9 @@ export class PrescriptionAssistant {
           max_tokens: 2400,
         }),
       });
-      const body = await response.json();
+      const body = await response.json().catch(() => null);
       if (!response.ok) {
-        const quota = body.error?.code === "AllocationQuota.FreeTierOnly";
+        const quota = body?.error?.code === "AllocationQuota.FreeTierOnly";
         throw new ClinicError(
           quota
             ? "Qwen access is blocked by the Alibaba account: AllocationQuota.FreeTierOnly. Enable model quota or paid access for the configured standard API key."
@@ -129,7 +136,7 @@ export class PrescriptionAssistant {
       }
       let answer;
       try {
-        answer = JSON.parse(body.choices?.[0]?.message?.content);
+        answer = JSON.parse(body?.choices?.[0]?.message?.content);
       } catch {
         throw new ClinicError(
           "Qwen returned an unreadable proposal. Your document is unchanged.",
@@ -141,6 +148,8 @@ export class PrescriptionAssistant {
         ...sources.map((source) => source.id),
       ]);
       if (
+        !answer ||
+        typeof answer !== "object" ||
         typeof answer.answer !== "string" ||
         answer.answer.length > 20000 ||
         typeof answer.proposal !== "string" ||

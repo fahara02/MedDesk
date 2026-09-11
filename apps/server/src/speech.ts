@@ -1,23 +1,55 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { ClinicError } from "./consultations.js";
 export interface SpeechVoice {
   name: string;
   language: string;
+  engine?: "windows" | "espeak-ng";
 }
 export class SpeechService {
   private voices: SpeechVoice[] = [];
   private busy = false;
-  constructor(private readonly script: string) {}
+  private readonly espeak: string;
+  private readonly espeakPath: string | undefined;
+  constructor(private readonly script: string) {
+    const built = path.resolve(
+      path.dirname(script),
+      "runtime/speech-source/build",
+    );
+    const executable = path.join(built, "src", "espeak-ng.exe");
+    this.espeak =
+      process.env.MEDDESK_ESPEAK_EXECUTABLE ||
+      (process.platform === "win32" && existsSync(executable)
+        ? executable
+        : "espeak-ng");
+    this.espeakPath =
+      process.env.MEDDESK_ESPEAK_DATA_PATH ||
+      (this.espeak === executable ? built : undefined);
+  }
   private run(
     input: string,
     list: boolean,
     signal?: AbortSignal,
+    offlineArgs?: string[],
   ): Promise<Buffer> {
+    if (signal?.aborted)
+      return Promise.reject(new ClinicError("Speech request cancelled.", 499));
     return new Promise((resolve, reject) => {
       const child = spawn(
-        "powershell.exe",
-        ["-NoProfile", "-File", this.script, ...(list ? ["-ListVoices"] : [])],
+        offlineArgs ? this.espeak : "powershell.exe",
+        offlineArgs
+          ? [
+              ...(this.espeakPath ? ["--path=" + this.espeakPath] : []),
+              ...offlineArgs,
+            ]
+          : [
+              "-NoProfile",
+              "-File",
+              this.script,
+              ...(list ? ["-ListVoices"] : []),
+            ],
         { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] },
       );
       const chunks: Buffer[] = [];
@@ -55,20 +87,40 @@ export class SpeechService {
     });
   }
   async initialize() {
-    if (process.platform !== "win32") return;
-    try {
-      this.voices = JSON.parse(
-        (await this.run("", true)).toString("utf8").replace(/^\uFEFF/, ""),
-      );
-    } catch {
-      this.voices = [];
+    this.voices = [];
+    if (process.platform === "win32") {
+      try {
+        this.voices = JSON.parse(
+          (await this.run("", true)).toString("utf8").replace(/^\uFEFF/, ""),
+        );
+      } catch {}
     }
+    try {
+      const listing = (
+        await this.run("", true, undefined, ["--voices"])
+      ).toString("utf8");
+      for (const [code, label] of [
+        ["bn", "Bengali"],
+        ["en-us", "English"],
+      ] as const) {
+        if (
+          listing
+            .split(/\r?\n/)
+            .some((line) => line.trim().split(/\s+/)[1] === code)
+        )
+          this.voices.push({
+            name: `${label} · offline eSpeak NG`,
+            language: code,
+            engine: "espeak-ng",
+          });
+      }
+    } catch {}
   }
   status() {
     return {
       available: this.voices.length > 0,
       voices: this.voices,
-      engine: "Windows installed voices",
+      engine: "Installed speech engines",
     };
   }
   async synthesize(input: unknown, signal?: AbortSignal) {
@@ -87,7 +139,7 @@ export class SpeechService {
     const voice = this.voices.find((voice) => voice.name === value.voice)!;
     if (/[\u0980-\u09FF]/.test(value.text) && !voice.language.startsWith("bn"))
       throw new ClinicError(
-        "This document contains Bengali. Choose a Bengali voice; the selected Windows voice does not support it.",
+        "This document contains Bengali. Choose a Bengali voice; the selected voice does not support it.",
         400,
       );
     if (this.busy)
@@ -97,23 +149,59 @@ export class SpeechService {
       );
     this.busy = true;
     try {
+      const offline = voice.engine === "espeak-ng";
       const audio = await this.run(
-        JSON.stringify({
-          text: value.text,
-          voice: value.voice,
-          rate:
-            typeof value.rate === "number"
-              ? Math.max(-3, Math.min(3, Math.round(value.rate)))
-              : 0,
-        }),
+        offline
+          ? value.text
+          : JSON.stringify({
+              text: value.text,
+              voice: value.voice,
+              rate:
+                typeof value.rate === "number"
+                  ? Math.max(-3, Math.min(3, Math.round(value.rate)))
+                  : 0,
+            }),
         false,
         signal,
+        offline
+          ? [
+              "--stdout",
+              "--stdin",
+              "-v",
+              voice.language,
+              "-s",
+              String(
+                175 +
+                  (typeof value.rate === "number"
+                    ? Math.max(-3, Math.min(3, Math.round(value.rate))) * 20
+                    : 0),
+              ),
+            ]
+          : undefined,
       );
       if (
         audio.toString("ascii", 0, 4) !== "RIFF" ||
         audio.toString("ascii", 8, 12) !== "WAVE"
       )
         throw new ClinicError("Speech returned an invalid audio file.", 502);
+      if (offline) {
+        // CLI streaming WAV uses an unknown-length header. The returned artifact
+        // has a known length, so finalize its RIFF/data sizes for browser seeking.
+        let found = false;
+        for (let offset = 12; offset + 8 <= audio.length && !found; ) {
+          const size = audio.readUInt32LE(offset + 4);
+          if (audio.toString("ascii", offset, offset + 4) === "data") {
+            audio.writeUInt32LE(audio.length - offset - 8, offset + 4);
+            found = true;
+          } else offset += 8 + size + (size & 1);
+        }
+        if (!found)
+          throw new ClinicError(
+            "Speech returned an incomplete audio file.",
+            502,
+          );
+        audio.writeUInt32LE(audio.length - 8, 4);
+      }
       return {
         audio,
         hash: createHash("sha256").update(value.text).digest("hex"),

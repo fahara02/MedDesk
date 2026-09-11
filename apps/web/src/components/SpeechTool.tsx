@@ -13,6 +13,8 @@ export function SpeechTool({ text }: { text: string }) {
   const player = useRef<HTMLAudioElement>(null),
     pending = useRef<AbortController | null>(null),
     objectUrl = useRef("");
+  const generation = useRef(0);
+  const bengali = /[\u0980-\u09ff]/.test(text);
   const available = typeof speechSynthesis !== "undefined";
   useEffect(() => {
     let active = true;
@@ -20,10 +22,6 @@ export function SpeechTool({ text }: { text: string }) {
       .then((value) => {
         if (active) {
           setWindows(value.voices || []);
-          if (value.voices?.length)
-            setSelected(
-              (previous) => previous || `windows:${value.voices[0].name}`,
-            );
         }
       })
       .catch(() => {});
@@ -32,6 +30,7 @@ export function SpeechTool({ text }: { text: string }) {
       refresh();
       speechSynthesis.addEventListener("voiceschanged", refresh);
       return () => {
+        generation.current++;
         active = false;
         speechSynthesis.removeEventListener("voiceschanged", refresh);
         speechSynthesis.cancel();
@@ -40,12 +39,26 @@ export function SpeechTool({ text }: { text: string }) {
       };
     }
     return () => {
+      generation.current++;
       active = false;
       pending.current?.abort();
       URL.revokeObjectURL(objectUrl.current);
     };
   }, [available]);
   useEffect(() => {
+    if (selected) return;
+    const language = bengali ? "bn" : "en";
+    const local = windows.find((voice) =>
+      voice.language.toLowerCase().startsWith(language),
+    );
+    const browser = voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith(language),
+    );
+    if (local) setSelected("windows:" + local.name);
+    else if (browser) setSelected("browser:" + browser.voiceURI);
+  }, [windows, voices, bengali, selected]);
+  useEffect(() => {
+    generation.current++;
     if (available) speechSynthesis.cancel();
     pending.current?.abort();
     player.current?.pause();
@@ -57,6 +70,7 @@ export function SpeechTool({ text }: { text: string }) {
     setStatus("Ready — using current document text");
   }, [text, available]);
   const play = async () => {
+    const version = ++generation.current;
     if (available) speechSynthesis.cancel();
     player.current?.pause();
     setStatus("Preparing speech…");
@@ -94,19 +108,33 @@ export function SpeechTool({ text }: { text: string }) {
         }
       }
     } else if (available) {
+      const voice = voices.find(
+        (voice) => voice.voiceURI === selected.slice(8),
+      );
+      if (!voice) {
+        setStatus("Select an available browser voice.");
+        return;
+      }
+      if (bengali && !voice.lang.toLowerCase().startsWith("bn")) {
+        setStatus("This document contains Bengali. Select a Bengali voice.");
+        return;
+      }
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.voice =
-        voices.find((voice) => voice.voiceURI === selected.slice(8)) || null;
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
       utterance.rate = rate;
       utterance.onstart = () => {
+        if (version !== generation.current) return;
         setPlaying(true);
         setStatus("Reading the document");
       };
       utterance.onend = () => {
+        if (version !== generation.current) return;
         setPlaying(false);
         setStatus("Finished");
       };
       utterance.onerror = () => {
+        if (version !== generation.current) return;
         setPlaying(false);
         setStatus("Speech could not be played. Choose another voice.");
       };
@@ -181,6 +209,7 @@ export function SpeechTool({ text }: { text: string }) {
             <button
               className="button"
               onClick={() => {
+                generation.current++;
                 speechSynthesis.cancel();
                 setPlaying(false);
                 setStatus("Stopped");

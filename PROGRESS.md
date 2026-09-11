@@ -9,14 +9,14 @@ project's 95 engineering tasks. This matrix does not alter that task denominator
 | Document save/reopen | Verified locally | Exact doses, Bangla, tables and signature images pass save tests. |
 | All drug files seeded | Verified locally | 9,763 products / 14 CSVs; zero import errors; SQLite index populated. |
 | Drug retrieval | Verified locally | FTS5, selected-product context, source hashes/URLs and actual nonempty excerpts. |
-| Working Qwen assistant | Partial | Adapter and reviewed proposal insertion exist; provider rejects calls under free-tier-only quota. |
-| TTS | Partial | Windows WAV synthesis works. Bengali voice absent; Linux needs browser/provider speech. |
+| Working Qwen assistant | Partial | Local and hosted configuration tested; full-context and citation guards pass. Provider still returns 403 `AllocationQuota.FreeTierOnly`. |
+| TTS | Verified locally | Windows and offline Bengali/English voices; actual Bengali HTTP WAV and edit/cancel tests pass. Docker includes eSpeak NG; container execution remains unverified. |
 | Doctor signature placement | Verified locally | Drawing/upload, insertion and persistence. Cryptographic signing remains separate. |
-| Genuine `.lps` saving | Unfinished | Native writer validation/compatibility/authorization and signing integration required. |
+| Genuine `.lps` saving | Unfinished | Native implementation gaps remain; unsigned-draft versus authorized-export decision requested. See [export boundary](NATIVE-EXPORT.md). |
 | Installable Windows bridge | Packaged | 34 MB executable; setup/tray/autostart, DPAPI credentials; extraction check passes. Fresh-PC installation unverified. |
 | Desktop → HTTPS → SSE | Synthetic integration verified | Actual Windows daemon tested for TLS upload failure, stable-ID retry and remote stop. Physical remote verification pending. |
 | Multiple PCs and offline behavior | Verified locally | Enrollment, revocation, per-PC selector, bounded durable queue and historical timestamps. |
-| Physical local Bluetooth dashboard | Verified | Server 8790; actual SSE-to-React test passed after graceful handover. |
+| Physical local Bluetooth dashboard | Verified | Server 8791; actual SSE-to-React test passed after graceful handover. |
 | Remote site on 72.62.69.41 | Prepared, not deployed | DNS correct, protected configuration and deployment archive ready. SSH username missing; existing server proxy must be inspected. |
 
 Next: establish SSH login, inspect existing services, deploy the protected site,

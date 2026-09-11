@@ -9,3 +9,4 @@ huami-token
 *.pdf
 *.log
 deploy/*.env
+runtime

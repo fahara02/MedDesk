@@ -2,7 +2,7 @@
 
 Latest studio and bridge status: [delivery matrix](PROGRESS.md).
 Remote deployment and Windows installer: [deployment guide](deploy/README.md).
-The updated local instance is at `http://localhost:8790/`.
+The updated local instance is at `http://localhost:8791/`.
 
 A local React and Node.js workspace for prescription drafting, source review,
 consultation history and real Mi Band 5 observations.
@@ -19,8 +19,8 @@ npm start
 ```
 
 Open `http://localhost:8787/#vitals`. The current development session is serving
-the updated application at **http://localhost:8789/#vitals** because earlier
-servers occupy 8787 and 8788. `PORT` selects a different local port.
+the updated application at **http://localhost:8791/#vitals**. Earlier servers
+remain on their ports with their collectors stopped. `PORT` selects a local port.
 
 For frontend development, `npm run dev` serves React on 5173 and proxies `/api`
 to the development server on 8787.
@@ -75,7 +75,8 @@ sleep rather than inventing a duration. See [PAIRING.md](PAIRING.md) for setup.
 
 Native `.lps` reading/writing, OCR, cryptographic signatures and pharmacy
 transactions are **not connected**. The new rich editor supports image signature
-placement and Windows TTS. Qwen/RAG is wired, but provider calls currently fail
+placement, Windows TTS and offline Bengali/English synthesis through eSpeak NG.
+See the deployment guide for speech setup. Qwen/RAG is wired, but provider calls currently fail
 under the account's free-tier-only quota restriction. The coverage page
 maps the broader plan; it is not a claim that those capabilities are complete.
 Prescription JSON export and printing do not produce a signed `.lps` file.
@@ -100,7 +101,7 @@ and verifies real SSE events update the React DOM at approximately 10-second
 intervals. It never creates readings:
 
 ```powershell
-$env:MEDDESK_LIVE_URL = 'http://127.0.0.1:8789'
+$env:MEDDESK_LIVE_URL = 'http://127.0.0.1:8791'
 npm run test --workspace @meddesk/web -- src/live-band.test.tsx
 Remove-Item Env:MEDDESK_LIVE_URL
 ```

@@ -3,6 +3,8 @@ import test from "node:test";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { MedicineCatalog } from "./catalog.js";
 import { DrugIndex } from "./drug-index.js";
 import { parseDocument, documentText } from "./document-model.js";
@@ -135,5 +137,39 @@ test(
         speech.synthesize({ text: "পরীক্ষা", voice: voices[0].name }),
         /Bengali/,
       );
+  },
+);
+
+test(
+  "offline Bengali speech produces seekable nonempty PCM and honors cancellation",
+  {
+    skip: !existsSync(
+      path.resolve("../../runtime/speech-source/build/src/espeak-ng.exe"),
+    ),
+    timeout: 20000,
+  },
+  async () => {
+    const speech = new SpeechService(
+      path.resolve("../../synthesize-speech.ps1"),
+    );
+    await speech.initialize();
+    const voice = speech
+      .status()
+      .voices.find(
+        (item) => item.language === "bn" && item.engine === "espeak-ng",
+      );
+    assert.ok(voice);
+    const text = "এটি বাংলা কণ্ঠস্বরের একটি পরীক্ষামূলক নমুনা।";
+    await assert.rejects(
+      speech.synthesize({ text, voice: voice.name }, AbortSignal.abort()),
+      /cancelled/,
+    );
+    const result = await speech.synthesize({ text, voice: voice.name });
+    assert.equal(result.audio.toString("ascii", 0, 4), "RIFF");
+    assert.equal(result.audio.toString("ascii", 8, 12), "WAVE");
+    assert.equal(result.audio.readUInt32LE(4), result.audio.length - 8);
+    assert.ok(result.audio.length > 10000);
+    assert.ok(result.audio.subarray(100).some((byte) => byte !== 0));
+    assert.equal(result.hash, createHash("sha256").update(text).digest("hex"));
   },
 );

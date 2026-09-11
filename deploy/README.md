@@ -100,10 +100,36 @@ It does not delete clinical records or unrelated application files.
 The React document editor, local consultation persistence, medicine catalog and retrieval
 index can run on Linux. Seed only the intended drug CSV files into the clinical data
 volume; never copy the local patient directory as a drug seed. Windows-generated speech
-is unavailable on Linux; browser speech depends on installed browser voices. Qwen needs
+is unavailable on Linux; the Docker image installs eSpeak NG for offline Bengali and
+English synthesis, with browser voices also selectable. Qwen needs
 working server-side provider credentials and quota. The current account's free-tier-only
 restriction rejected live calls. Signed native `.lps` export still needs native writer
 validation and authorization; hosting does not complete that feature.
+
+For hosted Qwen configuration, set `MEDDESK_QWEN_API_KEY`,
+`MEDDESK_QWEN_BASE_URL` and `MEDDESK_QWEN_MODEL` in the private `server.env`.
+These override file-based configuration and work without the Windows LUNA file.
+Use the standard DashScope compatible-mode endpoint and an account with model quota;
+the Token Plan endpoint is deliberately refused. Alternatively mount a private
+LUNA-format env file and point `MEDDESK_LUNA_ENV` to its container path. Never
+include these secrets in a source archive or the Windows installer.
+
+## Offline Bengali speech
+
+The local Windows workspace uses eSpeak NG 1.52.0 built from its pinned source
+archive with the existing MinGW/CMake/Ninja toolchain. Reproduce it with
+`powershell -NoProfile -File scripts/setup-speech.ps1`. No system installer or
+voice registration is used. Source, licenses and build outputs stay under ignored
+`runtime/speech-source/`; the app detects that executable and data directory.
+Override them using `MEDDESK_ESPEAK_EXECUTABLE` and `MEDDESK_ESPEAK_DATA_PATH`
+when using a different installation. Text is sent over stdin, never shell arguments.
+The synthesized WAV retains a source-text hash and is discarded in the UI when
+the document changes. This is an offline synthetic voice, not a neural voice;
+medication pronunciation still needs human review.
+
+Upstream code and license remain in the source archive:
+[eSpeak NG 1.52.0](https://github.com/espeak-ng/espeak-ng/tree/1.52.0),
+[GPL license](https://github.com/espeak-ng/espeak-ng/blob/1.52.0/COPYING).
 
 Protocol references: [Windows GATT client](https://learn.microsoft.com/en-us/windows/apps/develop/devices-sensors/gatt-client),
 [Caddy streaming proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy).

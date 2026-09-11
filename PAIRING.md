@@ -23,6 +23,11 @@ the band to work around an empty device list.
 
 ## Step 1: identify the existing band and account
 
+If the band displays **Pair first**, complete its first setup in the companion
+phone app and accept the pairing confirmation on the band. Merely adding it in
+Windows Bluetooth settings does not complete this setup. Xiaomi documents the
+on-band confirmation in its [Mi Smart Band 5 FAQ](https://www.mi.com/sg/support/faq/details/KA-07045/).
+
 1. Keep the band charged and its current pairing intact.
 2. Confirm the exact band model and the phone app that currently displays it.
 3. Confirm which Xiaomi account that app uses. A Gmail address is an account
@@ -138,6 +143,19 @@ disconnect, and serializing GATT operations. Mi Band 5 auth-key pairing is also
 documented in [Gadgetbridge's Xiaomi device guide](https://gadgetbridge.org/gadgets/wearables/xiaomi/).
 
 ## Troubleshooting
+
+### Check the PC connection before the band is initialized
+
+The current band permits a battery read while displaying **Pair first**. With
+its address saved as `BLUETOOTH_ADDRESS` in `.env`, run this from the checkout:
+
+```powershell
+.\read-band-battery.ps1 -SaveToServer
+```
+
+This makes a single uncached Windows Bluetooth read and saves the battery sample
+to the running local dashboard. Omit `-SaveToServer` to read without saving. It
+does not initialize the band or establish authenticated vitals monitoring.
 
 ### The browser does not list the band
 

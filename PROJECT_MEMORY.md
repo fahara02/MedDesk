@@ -12,7 +12,7 @@ This file records the implementation state needed to continue the project on ano
 
 ## Important decisions
 
-- The browser owns the Bluetooth connection. The Node.js server stores and distributes readings; it does not open Bluetooth itself.
+- The browser owns the monitoring connection. The Node.js server stores and distributes readings; it does not open Bluetooth itself. A separate Windows battery reader can perform a one-shot native Bluetooth read.
 - The owner uses an existing Xiaomi account whose email address is Gmail. Do not
   require a new Amazfit/Zepp account. The bundled extractor has a Xiaomi
   email/password route using `ACCOUNT_METHOD=xiaomi`; whether that route returns
@@ -125,3 +125,30 @@ Consultation-model, consultation-storage and medicine-catalog modules remain
 uncommitted work from before this clarification. They are not wired into the
 running app. Resume them after the current band/account step; preserve the added
 medicine CSVs and the associated dependency changes.
+
+## Physical Bluetooth check and initial setup
+
+The owner supplied BLUETOOTH_ADDRESS in `.env`. A direct Windows Bluetooth LE
+check using that address opened Mi Smart Band 5 with Paired=true and
+Connection=Connected, and discovered 12 services. Uncached custom and standard
+battery reads returned the same valid percentage. Real battery observations were
+saved through `/api/readings`; their values and timestamps remain in ignored
+`data/readings.jsonl`. Activity reads returned
+ATT protocol error 2; no heart-rate notification was received. A subsequent
+notification-subscription attempt failed before any measurement-start command.
+All native probe processes have exited; no continuous monitor was started.
+
+The owner then confirmed the band itself still displays "Pair first" and is in
+its initial setup mode. Windows pairing is not proof of completed band setup or
+application authentication. Pause measurement attempts until that first setup
+is complete. Xiaomi documents phone-app binding with on-band confirmation:
+https://www.mi.com/sg/support/faq/details/KA-07045/ . Ask for the actual phone OS
+and companion app before giving app-specific instructions. Keep the existing
+Xiaomi identity; do not require a new account based on the band brand.
+
+`read-band-battery.ps1` uses BLUETOOTH_ADDRESS and Windows PowerShell's native
+Bluetooth API to read only the standard battery percentage. `-SaveToServer`
+posts that real sample to the local MedDesk server. It performs no band writes,
+initialization, authentication, or heart-rate measurement and uses no account
+password. The helper was run successfully with `-SaveToServer` against the
+physical band. The experimental probes and raw responses remain under ignored tmp/.

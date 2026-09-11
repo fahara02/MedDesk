@@ -52,6 +52,11 @@ the existing Xiaomi route.
 
 Do not unpair or factory-reset the band after extracting the key; either action changes or invalidates it.
 
+For a Windows connection check, set `BLUETOOTH_ADDRESS` in `.env` and run
+`.\read-band-battery.ps1 -SaveToServer`. This reads the band's actual battery
+level through Windows Bluetooth and saves it to the running local dashboard.
+It does not complete a band's **Pair first** setup or authenticate vital readings.
+
 ## Production build
 
 ```powershell

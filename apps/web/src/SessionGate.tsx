@@ -73,6 +73,7 @@ export default function SessionGate() {
     generation.current++;
     try {
       await authRequest("logout", {});
+      sessionStorage.removeItem("meddesk.bridge.setup");
       setSession({ enabled: true, authenticated: false });
       setError(""); setMessage("You’ve signed out of your workspace."); notifyOtherTabs();
     } catch { setError("Sign-out did not complete. Check your connection and try again."); }

@@ -27,6 +27,17 @@ it("loads the doctor's saved signature into the footer and exposes the website i
   expect(within(dialog).getByRole("link", { name: "Download Windows installer" }).getAttribute("href")).toBe("/downloads/MedDesk-Bridge-Setup.exe");
   expect(within(dialog).getByLabelText("Server address")).toBeTruthy();
 });
+
+it("reopens installer setup with its still-valid computer name and enrollment code", async () => {
+  const code = "0123456789abcdef0123456789abcdef";
+  sessionStorage.setItem("meddesk.bridge.setup", JSON.stringify({ label: "Test consulting room", invite: { code, expiresAt: new Date(Date.now() + 60000).toISOString() } }));
+  window.location.hash = "#install-band";
+  render(<App />);
+  const dialog = await screen.findByRole("dialog");
+  expect((within(dialog).getByLabelText("Computer name") as HTMLInputElement).value).toBe("Test consulting room");
+  expect(within(dialog).getByText(code)).toBeTruthy();
+  sessionStorage.removeItem("meddesk.bridge.setup"); window.location.hash = "";
+});
 beforeEach(() => {
   records = {};
   localStorage.clear();

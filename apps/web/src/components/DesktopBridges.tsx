@@ -9,13 +9,27 @@ interface Device {
   revoked: boolean;
   lastSeenAt: string | null;
 }
+const SETUP_KEY = "meddesk.bridge.setup";
+function restoreSetup(): { label: string; invite: { code: string; expiresAt: string } | null } {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(SETUP_KEY) || "{}");
+    return { label: typeof value.label === "string" ? value.label.slice(0, 80) : "",
+      invite: /^[a-f0-9]{32}$/.test(value.invite?.code) && Date.parse(value.invite.expiresAt) > Date.now() ? value.invite : null };
+  } catch { return { label: "", invite: null }; }
+}
 export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [label, setLabel] = useState("");
+  const [label, setLabel] = useState(() => restoreSetup().label);
   const [invite, setInvite] = useState<{
     code: string;
     expiresAt: string;
-  } | null>(null);
+  } | null>(() => restoreSetup().invite);
+  useEffect(() => { try { sessionStorage.setItem(SETUP_KEY, JSON.stringify({ label, invite })); } catch {} }, [label, invite]);
+  useEffect(() => {
+    if (!invite) return;
+    const timer = setTimeout(() => setInvite(null), Math.max(0, Date.parse(invite.expiresAt) - Date.now()));
+    return () => clearTimeout(timer);
+  }, [invite]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -59,6 +73,7 @@ export function DesktopBridges({ band }: { band: ReturnType<typeof useBand> }) {
   const enroll = async () => {
     setBusy(true);
     setError("");
+    setCopied(false);
     try {
       setInvite(
         await api("/api/bridge/invites", {

@@ -13,6 +13,7 @@ import { DrugIndex } from "./drug-index.js";
 import { PrescriptionAssistant } from "./assistant.js";
 import { SpeechService } from "./speech.js";
 import { AudioSamples } from "./audio-samples.js";
+import { TranscriptionService } from "./transcription.js";
 import { BridgeRegistry } from "./bridge-registry.js";
 import { remoteAccess } from "./remote-access.js";
 import { WorkspaceAuth } from "./auth.js";
@@ -46,6 +47,7 @@ const artifacts = new ArtifactStore(
   path.join(dataDirectory, "clinic", "artifacts"),
 );
 const audioSamples = new AudioSamples(path.join(dataDirectory, "voice-samples"));
+const transcription = new TranscriptionService();
 const eventClients = new Set<Response>();
 await mkdir(dataDirectory, { recursive: true });
 const bridges = new BridgeRegistry(path.join(dataDirectory, "bridges.sqlite"));
@@ -118,6 +120,12 @@ app.get("/api/prescriber/signature", (_request, response) => {
   });
 });
 app.get("/api/audio-samples", async (_request, response) => response.json({ samples: await audioSamples.list() }));
+app.get("/api/transcription/status", (_request, response) => response.json(transcription.status()));
+app.post("/api/transcription", express.raw({ type: "audio/*", limit: "8mb" }), async (request, response) => {
+  const controller = new AbortController();
+  response.once("close", () => { if (!response.writableEnded) controller.abort(); });
+  response.json(await transcription.transcribe(request.body, request.get("Content-Type") || "", request.get("X-Audio-Language"), controller.signal));
+});
 app.post("/api/audio-samples", express.raw({ type: "audio/*", limit: "8mb" }), async (request, response) => {
   response.status(201).json({ sample: await audioSamples.save(request.body, request.get("Content-Type") || "", request.get("X-Audio-Language")) });
 });

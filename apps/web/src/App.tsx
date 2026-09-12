@@ -76,7 +76,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
     [lastSaved, setLastSaved] = useState("");
   const [modal, setModal] = useState<
       "medicine" | "review" | "command" | "replace" | "bridge" | null
-    >(null),
+    >(() => window.location.hash === "#install-band" ? "bridge" : null),
     [command, setCommand] = useState("");
   const [pending, setPending] = useState<ConsultationInput | null>(null),
     [assistantOpen, setAssistantOpen] = useState(false);
@@ -132,6 +132,11 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
       .then(setCaps)
       .catch(() => {});
     return () => clearTimeout(noticeTimer.current);
+  }, []);
+  useEffect(() => {
+    const openSetup = () => { if (window.location.hash === "#install-band") setModal("bridge"); };
+    window.addEventListener("hashchange", openSetup);
+    return () => window.removeEventListener("hashchange", openSetup);
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => {

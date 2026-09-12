@@ -32,7 +32,7 @@ for ($Index=0; $Index -lt $Labels.Count; $Index++) {
 }
 $Fields['Server address'].Text = 'https://medesk.lifeplusbd.tech'
 $Notice = New-Object Windows.Forms.Label
-$Notice.Text = 'Create an enrollment code in the website: Vitals > Desktop Bluetooth bridge. Windows must remain signed in and awake for Bluetooth collection.'
+$Notice.Text = 'Create an enrollment code on the website: Install Mi Band runner > Computer name > Create enrollment code. This is separate from your band authentication key.'
 $Notice.SetBounds(24,366,520,55)
 $Form.Controls.Add($Notice)
 $Install = New-Object Windows.Forms.Button

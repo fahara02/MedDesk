@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test src/reading.test.ts src/clinic.test.ts src/sleep.test.ts src/studio.test.ts src/bridge.test.ts src/assistant.test.ts src/audio-samples.test.ts src/auth.test.ts",
+    "test": "tsx --test src/reading.test.ts src/clinic.test.ts src/sleep.test.ts src/studio.test.ts src/bridge.test.ts src/assistant.test.ts src/audio-samples.test.ts src/auth.test.ts src/transcription.test.ts",
     "start": "node dist/index.js"
   },
   "dependencies": {

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DictationTool } from "./DictationTool";
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
+beforeEach(() => vi.stubGlobal("fetch", vi.fn(async () => Response.json({ available: false }))));
 
 it("unlocks capture after a speech service error even when the browser never emits end", () => {
   let recognition: any;
@@ -74,7 +75,7 @@ it("releases a microphone granted after the recording panel closes", async () =>
 
 it("records locally and uploads only after an explicit send", async () => {
   let recording: any;
-  const stop = vi.fn(), fetch = vi.fn(async () => new Response(JSON.stringify({ sample: { id: "sample-test" } }), { status: 201 }));
+  const stop = vi.fn(), fetch = vi.fn(async (_url: string) => new Response(JSON.stringify({ sample: { id: "sample-test" } }), { status: 201 }));
   Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [{ stop }] }) } });
   vi.stubGlobal("URL", class extends URL { static createObjectURL() { return "blob:test"; } static revokeObjectURL() {} });
   vi.stubGlobal("fetch", fetch);
@@ -89,9 +90,38 @@ it("records locally and uploads only after an explicit send", async () => {
   await act(async () => fireEvent.click(screen.getByText("Record audio sample")));
   expect(recording.state).toBe("recording");
   fireEvent.click(screen.getByText("Stop recording"));
-  expect(stop).toHaveBeenCalledOnce(); expect(fetch).not.toHaveBeenCalled();
+  expect(stop).toHaveBeenCalledOnce(); expect(fetch.mock.calls.filter(call => call[0] === "/api/audio-samples")).toHaveLength(0);
   await act(async () => fireEvent.click(screen.getByText("Send sample for comparison")));
-  expect(fetch).toHaveBeenCalledOnce();
+  expect(fetch.mock.calls.filter(call => call[0] === "/api/audio-samples")).toHaveLength(1);
   expect(fetch).toHaveBeenCalledWith("/api/audio-samples", expect.objectContaining({ headers: expect.objectContaining({ "X-Audio-Language": "en-US" }) }));
   expect(screen.getByText(/Sample received: sample-test/)).toBeTruthy();
+});
+
+it("records through the selected microphone and transcribes without browser speech recognition", async () => {
+  let recording: any;
+  const capture = vi.fn(async () => ({ getTracks: () => [{ stop: vi.fn() }] }));
+  Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: capture, enumerateDevices: async () => [{ kind: "audioinput", deviceId: "usb-mic", label: "USB microphone" }] } });
+  vi.stubGlobal("SpeechRecognition", class { constructor() { throw new Error("Browser recognition must not run"); } });
+  vi.stubGlobal("URL", class extends URL { static createObjectURL() { return "blob:dictation"; } static revokeObjectURL() {} });
+  vi.stubGlobal("MediaRecorder", class {
+    static isTypeSupported() { return true; }
+    state = "inactive"; mimeType = "audio/webm"; ondataavailable: any; onstop: any;
+    constructor() { recording = this; }
+    start() { this.state = "recording"; }
+    stop() { this.state = "inactive"; this.ondataavailable({ data: new Blob([new Uint8Array([0x1a,0x45,0xdf,0xa3])], { type: this.mimeType }) }); this.onstop(); }
+  });
+  const fetch = vi.fn(async (url: string) => Response.json(url === "/api/transcription/status" ? { available: true } : { text: "0.500 mg exactly" }));
+  vi.stubGlobal("fetch", fetch);
+  const insert = vi.fn(); render(<DictationTool onInsert={insert} />);
+  await screen.findByText(/Start dictation records your voice/);
+  fireEvent.change(screen.getByLabelText("Microphone"), { target: { value: "usb-mic" } });
+  await act(async () => fireEvent.click(screen.getByText("Start dictation")));
+  expect(capture).toHaveBeenCalledWith({ audio: { deviceId: { exact: "usb-mic" } } });
+  expect(recording.state).toBe("recording");
+  await act(async () => fireEvent.click(screen.getByText("Stop dictation")));
+  expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("0.500 mg exactly");
+  expect(insert).not.toHaveBeenCalled();
+  expect(fetch.mock.calls.some(call => call[0] === "/api/audio-samples")).toBe(false);
+  fireEvent.click(screen.getByText("Insert text at cursor"));
+  expect(insert).toHaveBeenCalledExactlyOnceWith("0.500 mg exactly");
 });

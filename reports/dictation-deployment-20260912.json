@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-12T00:16:25.993Z",
+  "release": "20260912-server-dictation",
+  "source": "Synthetic test speech, not owner microphone",
+  "serverTests": 25,
+  "webTests": 51,
+  "httpIntegrationTests": 2,
+  "english": {
+    "status": 200,
+    "milliseconds": 13440,
+    "result": {
+      "text": "This is a microphone test, the patient is 35 years old.\n The patient is 35 years old.",
+      "language": "en-US",
+      "audioSha256": "a95fa50a2553dfcd5882c3aea3222a1592b5218849539bfa23fdc17b0dd0fff1"
+    }
+  },
+  "silence": {
+    "status": 422,
+    "milliseconds": 397,
+    "result": {
+      "error": "No clear speech was detected. Check the microphone level and try again."
+    }
+  },
+  "bengali": {
+    "status": 422,
+    "milliseconds": 22853,
+    "result": {
+      "error": "The recording could not be recognized reliably in the selected language. Please retry a short, clear phrase."
+    }
+  },
+  "invalid": {
+    "status": 400,
+    "milliseconds": 215,
+    "result": {
+      "error": "The recording does not match its audio format."
+    }
+  },
+  "installer": {
+    "bytes": 34153984,
+    "sha256": "3b0cd24dd1310b20e5c600d1befe55a0854ca0a0ebbe418d7e1ce3c561a9b268"
+  },
+  "bundle": "/assets/index-4498t6R1.js",
+  "physicalMicrophone": "Still requires owner retry",
+  "bengaliAccuracy": "Failed synthetic speech; rejected rather than inserted"
+}

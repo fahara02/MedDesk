@@ -4,7 +4,51 @@ Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separat
 native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
 edited for this delivery.
 
-## Latest delivery — prescription layout, signature and installer access
+## Latest delivery — server dictation and repeatable installer setup
+
+Current release: `/opt/meddesk/releases/20260912-server-dictation`, linked by
+`/opt/meddesk/current`. The prior prescription milestone is committed as
+`dfbda76`, solely authored/committed by fahara02. Its M branding, layout, English
+default and private white signature remain deployed.
+
+The owner reported voice detection still failed. Browser permission is not proof
+that its recognition service works. Online ASR with the configured account also
+returned `403 AllocationQuota.FreeTierOnly`; billing was not changed. The primary
+Dictate action now records through a selected microphone and sends the clip to
+the hosted ASR service on Stop dictation. Input level, elapsed time and captured
+bytes are visible. Text is editable and requires explicit insertion. Browser
+dictation remains an optional alternative; comparison uploads are separate.
+
+The ASR service uses a pinned whisper.cpp image on an internal Docker network,
+with two CPUs and 1.5 GiB maximum RAM, no published port, no container logs,
+read-only root/model files and temporary audio only in a RAM filesystem.
+Observed RAM after probes was approximately 360 MiB; application about 95 MiB.
+`deploy/setup-transcription.sh` reproduces checksum-verified model downloads.
+See `deploy/TRANSCRIPTION.md`. No Python runtime was introduced.
+
+Actual authenticated HTTPS testing of a synthetic WebM clip returned English
+text in 13.44 seconds. It repeated one sentence: this is working transcription,
+not accuracy validation. Silence returned 422, malformed audio 400. A synthetic
+Bengali clip produced unrelated repeated characters and is now refused with 422
+by language/script/repetition checks. Bengali quality and the owner's microphone
+remain unverified; no result should be claimed clinically reliable. Evidence:
+`reports/dictation-deployment-20260912.json`.
+
+Installer setup is directly reopenable at `/#install-band`. Computer name and a
+still-valid enrollment code survive closing/reopening in the same browser tab;
+expired codes clear and logout removes the setup cache. Enrollment code comes
+from the website, while the band authentication key is the existing `.env` Key.
+The new installer text explains this distinction. Full hosted download matches
+the extraction-verified executable: 34,153,984 bytes, SHA-256
+`3b0cd24dd1310b20e5c600d1befe55a0854ca0a0ebbe418d7e1ce3c561a9b268`.
+Fresh-PC installation remains unverified.
+
+Latest checks: 25 server, 51 web, two HTTP integration tests (78 total), one
+physical web test skipped, local/remote builds and hosted synthetic transcription
+passed. No connected browser is available for physical microphone or visual QA.
+Native gates passed earlier in this delivery; native source/counts are unchanged.
+
+## Prior delivery — prescription layout, signature and installer access
 
 The owner reported that requested changes were absent from the live site.
 Local implementation is not delivery: publish and verify the hosted assets.
@@ -52,7 +96,7 @@ matched `id_ed25519_newage` private key. The earlier missing-username blocker is
 resolved. Nginx hosts this new site alongside the existing applications; the
 healthy MedDesk Docker container binds only 127.0.0.1:8792, uses about 98 MiB RAM,
 and retains data in `meddesk_clinical_data`. Current release:
-`/opt/meddesk/releases/20260912-prescription-pad`, with `/opt/meddesk/current` symlink.
+`/opt/meddesk/releases/20260912-server-dictation`, with `/opt/meddesk/current` symlink.
 Dashboard login details are in ignored `deploy/access.env`. No secrets were printed.
 
 The owner selected `qwen3.8-max`. It succeeds with the existing LUNA credential;
@@ -262,7 +306,7 @@ speech runtime because the active application uses it.
 
 Latest deployment, September 12: `https://medesk.lifeplusbd.tech` is live on
 `72.62.69.41`, SSH user `root`, key `C:/Users/FHR/.ssh/id_ed25519_newage`.
-The current release is `/opt/meddesk/releases/20260912-prescription-pad`, linked from
+The current release is `/opt/meddesk/releases/20260912-server-dictation`, linked from
 `/opt/meddesk/current`. Nginx serves HTTPS; the Node container binds only
 127.0.0.1:8792 and retains the `meddesk_clinical_data` volume. The branded React
 login replaces HTTP Basic Auth. The owner's existing username and chosen password

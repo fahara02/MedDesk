@@ -2,6 +2,10 @@
 
 Target: `https://medesk.lifeplusbd.tech` on `72.62.69.41`.
 
+Hosted dictation now uses an internal service in `compose.nginx.yml`. Before a
+fresh deployment, run `bash deploy/setup-transcription.sh` on the host; then use
+the normal Compose build/up commands. See [transcription setup and limits](TRANSCRIPTION.md).
+
 ## Live deployment — September 12, 2026
 
 The site is deployed. SSH uses `root` and the matching existing private key.

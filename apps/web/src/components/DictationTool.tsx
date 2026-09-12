@@ -26,6 +26,13 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
   const [elapsed, setElapsed] = useState(0);
   const [capturedBytes, setCapturedBytes] = useState(0);
   const [microphone, setMicrophone] = useState("");
+  const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
+  const [inputId, setInputId] = useState("");
+  const [level, setLevel] = useState(0);
+  const [serverReady, setServerReady] = useState(false);
+  const [sampleLanguage, setSampleLanguage] = useState(language);
+  const forDictation = useRef(false);
+  const meter = useRef<{ context: AudioContext; timer: ReturnType<typeof setInterval> } | null>(null);
   const recognition = useRef<Recognition | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -38,11 +45,23 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
   const busy = mode !== "idle";
   const clearSpeechTimer = () => { if (speechTimer.current) clearTimeout(speechTimer.current); speechTimer.current = null; };
   const stopTracks = () => {
+    if (meter.current) { clearInterval(meter.current.timer); void meter.current.context.close(); meter.current = null; }
+    setLevel(0);
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
   };
+  const refreshInputs = () => {
+    void navigator.mediaDevices?.enumerateDevices?.().then(devices => setInputs(devices.filter(device => device.kind === "audioinput"))).catch(() => {});
+  };
+  useEffect(() => {
+    const abort = new AbortController();
+    refreshInputs();
+    void workspaceFetch("/api/transcription/status", { signal: abort.signal }).then(response => response.ok ? response.json() : null)
+      .then(value => { if (!abort.signal.aborted) setServerReady(value?.available === true); }).catch(() => {});
+    return () => abort.abort();
+  }, []);
   useEffect(() => () => {
     version.current++;
     clearSpeechTimer();
@@ -114,16 +133,31 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
     try { current.start(); }
     catch { fail("Dictation could not start. Check microphone access."); }
   };
-  const record = async () => {
+  const record = async (dictation = false) => {
     if (busy) return;
     const session = ++version.current;
+    forDictation.current = dictation;
     setMode("starting-recording"); setStatus("Allow microphone access to record your sample.");
     setElapsed(0); setCapturedBytes(0); setMicrophone("");
     try {
-      const input = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const input = await navigator.mediaDevices.getUserMedia({ audio: inputId ? { deviceId: { exact: inputId } } : true });
       if (session !== version.current) { input.getTracks().forEach((track) => track.stop()); return; }
       stream.current = input;
       setMicrophone(input.getAudioTracks?.()[0]?.label || "Selected microphone");
+      refreshInputs();
+      if (typeof AudioContext !== "undefined") {
+        try {
+          const context = new AudioContext(), source = context.createMediaStreamSource(input), analyser = context.createAnalyser();
+          analyser.fftSize = 256; source.connect(analyser);
+          const data = new Uint8Array(analyser.fftSize);
+          const tick = setInterval(() => {
+            analyser.getByteTimeDomainData(data);
+            const rms = Math.sqrt(data.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / data.length);
+            if (session === version.current) setLevel(Math.min(1, rms * 4));
+          }, 100);
+          meter.current = { context, timer: tick }; void context.resume().catch(() => {});
+        } catch {}
+      }
       const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"].find((type) => MediaRecorder.isTypeSupported(type));
       const current = new MediaRecorder(input, mime ? { mimeType: mime } : undefined);
       recorder.current = current;
@@ -148,10 +182,11 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
         if (!audio.size) { setStatus("No audio was captured. Try again."); return; }
         URL.revokeObjectURL(url.current);
         url.current = URL.createObjectURL(audio);
-        setSample(audio); setSampleUrl(url.current);
+        setSample(audio); setSampleUrl(url.current); setSampleLanguage(language);
         setStatus("Sample ready. Listen before sending it for comparison.");
+        if (dictation) void transcribe(audio, language);
       };
-      current.start(1000); setMode("recording"); setStatus("Recording your sample — maximum 60 seconds.");
+      current.start(1000); setMode("recording"); setStatus(dictation ? "Recording dictation. Speak, then press Stop dictation to transcribe." : "Recording your sample — maximum 60 seconds.");
       timer.current = setTimeout(() => { if (current.state === "recording") current.stop(); }, 60000);
     } catch (error) {
       stopTracks();
@@ -166,12 +201,27 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
       if (session === version.current) { setMode("idle"); setStatus(messages[name] || `Recording could not start (${name}). Check your microphone input.`); }
     }
   };
+  const transcribe = async (audio: Blob, spokenLanguage: string) => {
+    const session = version.current, controller = new AbortController(); upload.current = controller;
+    setMode("transcribing"); setStatus("Transcribing your recording…");
+    try {
+      const response = await workspaceFetch("/api/transcription", { method: "POST", headers: { "Content-Type": audio.type, "X-Audio-Language": spokenLanguage }, body: audio, signal: controller.signal });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Transcription failed. Your recording is available for retry.");
+      if (typeof result.text !== "string" || !result.text.trim()) throw new Error("No speech was returned. Check the microphone level and try again.");
+      if (session === version.current && !controller.signal.aborted) {
+        setText(previous => [previous, result.text].filter(Boolean).join(" "));
+        setStatus("Transcription ready. Review the words and numbers before inserting.");
+      }
+    } catch (error) { if (session === version.current && !controller.signal.aborted) setStatus((error as Error).message); }
+    finally { if (session === version.current && !controller.signal.aborted) { setMode("idle"); upload.current = null; } }
+  };
   const sendSample = async () => {
     if (!sample || busy) return;
     const controller = new AbortController(); upload.current = controller;
     setMode("uploading"); setStatus("Sending your sample for the requested comparison…");
     try {
-      const response = await workspaceFetch("/api/audio-samples", { method: "POST", headers: { "Content-Type": sample.type, "X-Audio-Language": language }, body: sample, signal: controller.signal });
+      const response = await workspaceFetch("/api/audio-samples", { method: "POST", headers: { "Content-Type": sample.type, "X-Audio-Language": sampleLanguage }, body: sample, signal: controller.signal });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The sample could not be sent.");
       if (!controller.signal.aborted) setStatus(`Sample received: ${result.sample.id}. Model comparison is pending; no accuracy score has been assigned.`);
@@ -182,12 +232,17 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
     <h3>Speech to text</h3>
     <p role="status" className={mode === "recording" || mode === "listening" ? "dictation-recording" : "helper"}>{status}</p>
     {mode === "recording" && <p className="dictation-recording">{microphone} · {elapsed}s / 60s · {Math.ceil(capturedBytes / 1024)} KB captured</p>}
+    {mode === "recording" && <label className="field"><span>Microphone input level</span><meter min={0} max={1} value={level} aria-label="Microphone input level" style={{ width: "100%" }} /><small>If the level stays flat while speaking, stop and choose another microphone.</small></label>}
+    <label className="field"><span>Microphone</span><select value={inputId} disabled={busy} onChange={event => setInputId(event.target.value)}><option value="">Browser default microphone</option>{inputs.filter(input => input.deviceId !== "default").map((input, index) => <option value={input.deviceId} key={input.deviceId}>{input.label || `Microphone ${index + 1}`}</option>)}</select></label>
     <p className="helper">Dictate, review the recognized words, then insert them at your cursor. Check medicine names, numbers and units.</p>
     <label className="field"><span>Spoken language</span><select value={language} disabled={busy} onChange={(event) => setLanguage(event.target.value)}>
       <option value="bn-BD">বাংলা · Bangladesh</option><option value="en-US">English</option><option value="bn-IN">বাংলা · India</option>
     </select></label>
     <div className="toolbar">
-      <button className="button primary" disabled={busy || !Constructor} onClick={dictate}>Start dictation</button>
+      <button className="button primary" disabled={busy || (!serverReady && !Constructor)} onClick={() => { if (serverReady) void record(true); else dictate(); }}>Start dictation</button>
+      {serverReady && Constructor && <button className="button" disabled={busy} onClick={dictate}>Use browser dictation</button>}
+      {mode === "recording" && forDictation.current && <button className="button" onClick={() => recorder.current?.stop()}>Stop dictation</button>}
+      {mode === "transcribing" && <button className="button" onClick={() => { upload.current?.abort(); upload.current = null; setMode("idle"); setStatus("Transcription cancelled. Your recording is available for retry."); }}>Cancel transcription</button>}
       {(mode === "listening" || mode === "starting") && <button className="button" onClick={() => {
         const current = recognition.current;
         setMode("stopping");
@@ -200,8 +255,8 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
         try { current?.stop(); } catch { current?.abort(); }
       }}>Stop dictation</button>}
     </div>
-    {!Constructor && <p className="helper">Live speech recognition is unavailable in this browser. Use a supported Chrome browser or record a sample below.</p>}
-    <p className="helper">Live dictation uses your browser's speech service, which may process audio online.</p>
+    {!Constructor && !serverReady && <p className="helper">Speech recognition is unavailable. You can still record a sample below.</p>}
+    <p className="helper">{serverReady ? "Start dictation records your voice. When you stop, audio is sent to this MedDesk server for transcription and is not saved there. Browser dictation uses the browser’s own speech service." : "Live dictation uses your browser's speech service, which may process audio online."}</p>
     <p className="dictation-interim" aria-live="polite">{interim}</p>
     <label className="field"><span>Recognized text</span><textarea rows={5} value={text} disabled={busy} onChange={(event) => setText(event.target.value)} /></label>
     <button className="button full" disabled={busy || !text.trim()} onClick={() => { if (onInsert(text) !== false) { setText(""); setStatus("Recognized text inserted. Review it in the prescription."); } }}>Insert text at cursor</button>
@@ -210,8 +265,8 @@ export function DictationTool({ onInsert, initialLanguage = "en-US" }: { onInser
     <p className="helper">Record a short test phrase without patient details. Recording stays in this browser until you send it. Sending saves the sample privately for the requested model comparison.</p>
     <div className="toolbar"><button className="button" disabled={busy || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined"} onClick={() => void record()}>Record audio sample</button>
       {mode === "starting-recording" && <button className="button" onClick={() => { version.current++; setMode("idle"); setStatus("Microphone request cancelled. You can try again."); }}>Cancel microphone request</button>}
-      {mode === "recording" && <button className="button" onClick={() => recorder.current?.stop()}>Stop recording</button>}
+      {mode === "recording" && !forDictation.current && <button className="button" onClick={() => recorder.current?.stop()}>Stop recording</button>}
     </div>
-    {sampleUrl && <><audio className="dictation-audio" src={sampleUrl} controls aria-label="Your audio sample" /><button className="button primary full" disabled={busy} onClick={() => void sendSample()}>Send sample for comparison</button></>}
+    {sampleUrl && <><audio className="dictation-audio" src={sampleUrl} controls aria-label="Your audio sample" />{serverReady && <button className="button primary full" disabled={busy} onClick={() => { if (sample) void transcribe(sample, sampleLanguage); }}>Transcribe recording</button>}<button className="button full" disabled={busy} onClick={() => void sendSample()}>Send sample for comparison</button></>}
   </div>;
 }

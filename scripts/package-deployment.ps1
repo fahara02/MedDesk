@@ -13,7 +13,7 @@ foreach ($Workspace in @('server','web')) {
     }
 }
 $null = New-Item -ItemType Directory -Path (Join-Path $Stage 'deploy'),(Join-Path $Stage 'releases') -Force
-foreach ($Name in @('Dockerfile','compose.yml','compose.nginx.yml','Caddyfile','nginx.conf','nginx-http.conf','README.md')) { Copy-Item -LiteralPath (Join-Path $Root "deploy\$Name") -Destination (Join-Path $Stage 'deploy') }
+foreach ($Name in @('Dockerfile','compose.yml','compose.nginx.yml','Caddyfile','nginx.conf','nginx-http.conf','README.md','TRANSCRIPTION.md','setup-transcription.sh')) { Copy-Item -LiteralPath (Join-Path $Root "deploy\$Name") -Destination (Join-Path $Stage 'deploy') }
 foreach ($Name in @('MedDesk-Bridge-Setup.exe','MedDesk-Bridge-Setup.exe.sha256')) { Copy-Item -LiteralPath (Join-Path $Root "releases\$Name") -Destination (Join-Path $Stage 'releases') }
 $Archive = Join-Path $Root 'releases\meddesk-server.tar.gz'
 & tar.exe -czf $Archive -C $Stage .

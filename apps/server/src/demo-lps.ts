@@ -106,7 +106,8 @@ function chunk(type: string, payload: Uint8Array): Uint8Array {
 
 function checkedDraft(value: unknown): ConsultationInput {
   const draft = parseConsultation(value, true);
-  if (!draft?.synthetic || draft.vitalReadingIds.length || draft.sources.length) {
+  if (!draft) throw new Error("The prescription contains invalid or inconsistent fields. Review it before exporting.");
+  if (!draft.synthetic || draft.vitalReadingIds.length || draft.sources.length) {
     throw new Error("Demo LPS export accepts fictional consultations without linked device readings or source files only.");
   }
   return draft;

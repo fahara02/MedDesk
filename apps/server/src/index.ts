@@ -94,6 +94,7 @@ app.get("/api/capabilities", (_request, response) =>
     artifacts: true,
     medicineCatalog: catalog.status(),
     nativeLps: false,
+    demoLps: true,
     ocr: false,
     assistant: assistant.status().configured,
     assistantDetails: assistant.status(),

@@ -6,6 +6,7 @@ import { buildDemoPdf } from './build-demo-prescription.mjs';
 import { demoPrescription } from '../apps/server/src/demo-prescription.ts';
 import { parseConsultation } from '../apps/server/src/clinical-model.ts';
 import { encodeDemoLps, decodeDemoLps, crc32c, DEMO_LPS_LIMIT } from '../apps/server/src/demo-lps.ts';
+import { initialDocument } from '../apps/web/src/lib/document.ts';
 
 test('published sample PDF matches its source fixture and can be rebuilt exactly', async () => {
   const { pdf, sourceSha256 } = await buildDemoPdf();
@@ -53,7 +54,8 @@ test('demo LPS preserves authored Unicode, exact decimal strings and editor cont
   const draft = demoPrescription();
   draft.medications[0].dose = '0.500 mg';
   draft.advice = 'বাংলা\nLiteral <tag> & text';
-  draft.document = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Extra exact paragraph', marks: [{ type: 'bold' }] }] }] };
+  draft.document = initialDocument(draft);
+  draft.document.content.push({ type: 'paragraph', content: [{ type: 'text', text: 'Extra exact paragraph', marks: [{ type: 'bold' }] }] });
   assert.deepEqual(decodeDemoLps(encodeDemoLps(draft)), parseConsultation(draft, true));
 });
 

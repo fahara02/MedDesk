@@ -20,6 +20,7 @@ export interface Capabilities {
   consultation: boolean;
   artifacts: boolean;
   nativeLps: boolean;
+  demoLps?: boolean;
   ocr: boolean;
   assistant: boolean;
   neuralSpeech: boolean;

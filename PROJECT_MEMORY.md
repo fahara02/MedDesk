@@ -4,10 +4,44 @@ Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separat
 native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
 edited for this delivery.
 
-## Latest delivery — server dictation and repeatable installer setup
+## Latest delivery — visible Stop and prescription field placement
 
-Current release: `/opt/meddesk/releases/20260912-server-dictation`, linked by
-`/opt/meddesk/current`. The prior prescription milestone is committed as
+Live release: `/opt/meddesk/releases/20260912-dictation-fields`, September 12,
+06:37 Dhaka. Recording controls now sit outside the scrolling tool body. A large
+red Stop replaces Start in the same position; microphone details and comparison
+tools are collapsed below review. The owner's 36-second capture report exposed
+that the previous Stop button was below a long sequence of settings/help text.
+
+Dictation uses an explicit prescription field, with its paper region and exact
+before/apply preview. It supports patient details, clinical notes, observations,
+diagnosis, advice/follow-up and each existing medicine's individual fields.
+Append retains existing text; Replace requires explicit selection. Application
+resolves the current field by identity, including the stable medicine ID, instead
+of using the cursor or a saved position. Removed/ambiguous destinations refuse
+insertion and retain the transcript. No clinical interpretation or automatic
+multi-field extraction is claimed. Decimal strings, Bengali, literal markup,
+line breaks and existing marks are preserved; insertion is undoable.
+
+85 application checks passed: 25 server, 58 web, two HTTP integrations; one
+physical web test skipped. The two HTTP tests initially exceeded their startup
+window during concurrent checks and passed unchanged when rerun separately.
+Local/remote builds and all four required native gates passed (87 architecture
+mutations caught; two existing architecture warnings). No native source changed.
+Live bundle/CSS hashes match the built files; authenticated transcription status,
+signature, catalog and SSE passed. Browser discovery returned unavailable, so
+pixel visibility and recognition from the owner's real microphone are unverified.
+See `reports/DELIVERY-20260912-DICTATION-FIELDS.md` and
+`reports/dictation-fields-deployment-20260912.json`.
+
+Rollback image: `meddesk:pre-dictation-fields-20260912`. The speech container was
+retained. Observed application RAM ~93 MiB; speech ~368 MiB. No active Bluetooth
+collector was restarted, and no credentials, patient data or signature were
+committed.
+
+## Earlier delivery — server dictation and repeatable installer setup
+
+Earlier release: `/opt/meddesk/releases/20260912-server-dictation`, committed as
+`8d433e3`. The prior prescription milestone is committed as
 `dfbda76`, solely authored/committed by fahara02. Its M branding, layout, English
 default and private white signature remain deployed.
 
@@ -43,7 +77,7 @@ the extraction-verified executable: 34,153,984 bytes, SHA-256
 `3b0cd24dd1310b20e5c600d1befe55a0854ca0a0ebbe418d7e1ce3c561a9b268`.
 Fresh-PC installation remains unverified.
 
-Latest checks: 25 server, 51 web, two HTTP integration tests (78 total), one
+Checks for that milestone: 25 server, 51 web, two HTTP integration tests (78 total), one
 physical web test skipped, local/remote builds and hosted synthetic transcription
 passed. No connected browser is available for physical microphone or visual QA.
 Native gates passed earlier in this delivery; native source/counts are unchanged.
@@ -306,7 +340,7 @@ speech runtime because the active application uses it.
 
 Latest deployment, September 12: `https://medesk.lifeplusbd.tech` is live on
 `72.62.69.41`, SSH user `root`, key `C:/Users/FHR/.ssh/id_ed25519_newage`.
-The current release is `/opt/meddesk/releases/20260912-server-dictation`, linked from
+The current release is `/opt/meddesk/releases/20260912-dictation-fields`, linked from
 `/opt/meddesk/current`. Nginx serves HTTPS; the Node container binds only
 127.0.0.1:8792 and retains the `meddesk_clinical_data` volume. The branded React
 login replaces HTTP Basic Auth. The owner's existing username and chosen password

@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { DictationTool } from "./DictationTool";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { DictationTool as PrescriptionDictation } from "./DictationTool";
+const target = { id: JSON.stringify([null, "complaints"]), label: "Chief complaints (C/C)", group: "Clinical notes · left column", value: "", from: 1, to: 1 };
+function DictationTool(props: Omit<ComponentProps<typeof PrescriptionDictation>, "targets"> & { targets?: ComponentProps<typeof PrescriptionDictation>["targets"] }) {
+  return <PrescriptionDictation targets={[target]} {...props} />;
+}
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
 beforeEach(() => vi.stubGlobal("fetch", vi.fn(async () => Response.json({ available: false }))));
 
@@ -52,8 +57,8 @@ it("retains exact finalized dictation once, requires insertion, and ignores call
   expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("0.500 mg প্রতিদিন রাতে");
   expect(insert).not.toHaveBeenCalled();
   fireEvent.click(screen.getByText("Stop dictation"));
-  fireEvent.click(screen.getByText("Insert text at cursor"));
-  expect(insert).toHaveBeenCalledExactlyOnceWith("0.500 mg প্রতিদিন রাতে");
+  fireEvent.click(screen.getByText("Add to Chief complaints (C/C)"));
+  expect(insert).toHaveBeenCalledExactlyOnceWith("0.500 mg প্রতিদিন রাতে", target.id, "append");
   fireEvent.click(screen.getByText("Start dictation"));
   unmount();
   expect(recognition.abort).toHaveBeenCalledOnce();
@@ -98,6 +103,7 @@ it("records locally and uploads only after an explicit send", async () => {
 });
 
 it("records through the selected microphone and transcribes without browser speech recognition", async () => {
+  vi.useFakeTimers();
   let recording: any;
   const capture = vi.fn(async () => ({ getTracks: () => [{ stop: vi.fn() }] }));
   Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: capture, enumerateDevices: async () => [{ kind: "audioinput", deviceId: "usb-mic", label: "USB microphone" }] } });
@@ -112,16 +118,45 @@ it("records through the selected microphone and transcribes without browser spee
   });
   const fetch = vi.fn(async (url: string) => Response.json(url === "/api/transcription/status" ? { available: true } : { text: "0.500 mg exactly" }));
   vi.stubGlobal("fetch", fetch);
-  const insert = vi.fn(); render(<DictationTool onInsert={insert} />);
-  await screen.findByText(/Start dictation records your voice/);
+  const insert = vi.fn(); await act(async () => { render(<DictationTool onInsert={insert} />); });
+  expect(screen.getByText(/Start dictation records your voice/)).toBeTruthy();
   fireEvent.change(screen.getByLabelText("Microphone"), { target: { value: "usb-mic" } });
   await act(async () => fireEvent.click(screen.getByText("Start dictation")));
   expect(capture).toHaveBeenCalledWith({ audio: { deviceId: { exact: "usb-mic" } } });
   expect(recording.state).toBe("recording");
+  act(() => vi.advanceTimersByTime(36000));
+  const controls = screen.getByRole("region", { name: "Recording controls" });
+  expect(controls.parentElement?.firstElementChild).toBe(controls);
+  expect(within(controls).getByRole("button", { name: "Stop dictation" })).toBeTruthy();
+  expect(within(controls).getByLabelText("Recording duration").textContent).toBe("36s / 60s");
+  expect(within(controls).queryByText(/KB captured/)).toBeNull();
   await act(async () => fireEvent.click(screen.getByText("Stop dictation")));
   expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("0.500 mg exactly");
   expect(insert).not.toHaveBeenCalled();
   expect(fetch.mock.calls.some(call => call[0] === "/api/audio-samples")).toBe(false);
-  fireEvent.click(screen.getByText("Insert text at cursor"));
-  expect(insert).toHaveBeenCalledExactlyOnceWith("0.500 mg exactly");
+  fireEvent.click(screen.getByText("Add to Chief complaints (C/C)"));
+  expect(insert).toHaveBeenCalledExactlyOnceWith("0.500 mg exactly", target.id, "append");
+});
+
+it("retains reviewed text if a destination disappears instead of choosing a different field", () => {
+  const insert = vi.fn();
+  const { rerender } = render(<DictationTool onInsert={insert} />);
+  fireEvent.change(screen.getByLabelText("Recognized text"), { target: { value: "Keep this text" } });
+  rerender(<DictationTool onInsert={insert} targets={[]} />);
+  expect((screen.getByRole("button", { name: "Choose a prescription field" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("Keep this text");
+  expect(insert).not.toHaveBeenCalled();
+});
+
+it("shows the exact replacement preview and retains text when application fails", () => {
+  const insert = vi.fn(() => false);
+  render(<DictationTool onInsert={insert} targets={[{ ...target, value: "Existing complaint" }]} />);
+  fireEvent.change(screen.getByLabelText("Recognized text"), { target: { value: "New complaint" } });
+  expect(screen.getByLabelText("Prescription field preview").textContent).toContain("Existing complaint\nNew complaint");
+  fireEvent.change(screen.getByLabelText("Apply as"), { target: { value: "replace" } });
+  expect(screen.getByLabelText("Prescription field preview").textContent).not.toContain("Existing complaint");
+  fireEvent.click(screen.getByRole("button", { name: "Replace Chief complaints (C/C)" }));
+  expect(insert).toHaveBeenCalledExactlyOnceWith("New complaint", target.id, "replace");
+  expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("New complaint");
+  expect(screen.getByRole("status").textContent).toContain("your text is retained");
 });

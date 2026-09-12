@@ -1,0 +1,26 @@
+{
+  "date": "2026-09-12T00:37:16.140Z",
+  "url": "https://medesk.lifeplusbd.tech",
+  "release": "20260912-dictation-fields",
+  "assets": {
+    "bundle": "/assets/index-BMR8c-8R.js",
+    "css": "/assets/index-CwsvLtC4.css",
+    "javascriptSha256": "cbec83f1e4d830ee01c500ce4a6f42a1fb15a9d3541e44b8b347e1f42c4b8917",
+    "cssSha256": "05c1e50159421e5b5be7cfba59acc906097df997caaef73360425b5a4a374d2c",
+    "matchBuiltFiles": true
+  },
+  "transcriptionAvailable": true,
+  "signatureRetained": true,
+  "products": 9763,
+  "authenticatedSse": true,
+  "validation": {
+    "serverTests": 25,
+    "webTests": 58,
+    "webSkipped": 1,
+    "httpIntegrationTests": 2,
+    "recordingControlTest": "Simulated selected-microphone recording at 36 seconds: Stop in fixed control region; stopping transcribes; explicit field insertion required.",
+    "mappingTests": "Saved advice, stable medicine ID after reorder, wrong cursor, removed/ambiguous destination refusal, patient/vitals/diagnosis/follow-up, exact decimal/Bengali/newlines, markup literal, existing marks, undo.",
+    "visualBrowser": "Unavailable: no browser connection; DOM tests do not establish pixel visibility.",
+    "ownerMicrophone": "User reported recording bytes; owner audio recognition not independently tested in this release."
+  }
+}

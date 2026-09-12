@@ -17,6 +17,7 @@ import { DictationTool } from "./DictationTool";
 import { Letterhead } from "./Letterhead";
 import { practice } from "../lib/branding";
 import { loadSavedSignature } from "../lib/signature";
+import { applyDictation, dictationTargets } from "../lib/dictation";
 import { Icon } from "./Icon";
 
 export function Studio({
@@ -88,6 +89,7 @@ export function Studio({
       recordField: editor?.isActive("recordField"),
       canUndo: editor?.can().undo(),
       canRedo: editor?.can().redo(),
+      dictationTargets: editor ? dictationTargets(editor.state.doc) : [],
     }),
   });
   useEffect(() => {
@@ -461,7 +463,7 @@ export function Studio({
                 </button>
               ))}
             </div>
-            <div className="tools-content">
+            <div className={`tools-content ${tool === "dictation" ? "dictation-content" : ""}`}>
               {tool === "medicines" && (
                 <>
                   <h3>Medicine library</h3>
@@ -533,9 +535,10 @@ export function Studio({
                 />
               )}
               {tool === "dictation" && (
-                <DictationTool key={draft.id + (draft.language || "en")} initialLanguage={draft.language === "bn" ? "bn-BD" : "en-US"} onInsert={(text) =>
-                  editor.chain().focus().insertContent({ type: "text", text }).run()
-                } />
+                <DictationTool key={draft.id + (draft.language || "en")}
+                  initialLanguage={draft.language === "bn" ? "bn-BD" : "en-US"}
+                  targets={state?.dictationTargets || []}
+                  onInsert={(text, target, action) => applyDictation(editor, target, text, action)} />
               )}
               {tool === "signature" && (
                 <SignatureTool

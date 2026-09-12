@@ -135,6 +135,25 @@ afterEach(() => {
 });
 
 describe("doctor workspace", () => {
+  it("puts reviewed dictation in the selected prescription field and saves its projection", async () => {
+    render(<App />);
+    await writeField("patient.name", "Synthetic dictation mapping");
+    await writeField("complaints", "Existing complaint");
+    await writeField("advice", "Existing advice");
+    fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+    const destination = screen.getByLabelText("Prescription field") as HTMLSelectElement;
+    const advice = Array.from(destination.options).find(option => option.textContent === "Advice")!;
+    fireEvent.change(destination, { target: { value: advice.value } });
+    fireEvent.change(screen.getByLabelText("Recognized text"), { target: { value: "Reviewed instruction\n0.500 mg exactly" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Advice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
+    await waitFor(() => expect(Object.values(records)).toHaveLength(1));
+    const saved = Object.values(records)[0];
+    expect(saved.patient.name).toBe("Synthetic dictation mapping");
+    expect(saved.complaints).toBe("Existing complaint");
+    expect(saved.advice).toBe("Existing advice\nReviewed instruction\n0.500 mg exactly");
+    expect((screen.getByLabelText("Recognized text") as HTMLTextAreaElement).value).toBe("");
+  });
   it("keeps a real table and placed signature when saving an authored document", async () => {
     render(<App />);
     await writeField("patient.name", "Synthetic document integration");

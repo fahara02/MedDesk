@@ -5,7 +5,15 @@ Checked September 12, 2026 against the paused native tree at
 dependencies for the studio's requested Save `.lps`; it does not redefine JSON
 export or image-signature placement as a native document.
 
-## The decision requested
+## Demo decision received
+
+The owner has now explicitly approved relaxed unsigned export for their personal
+demo. [DEMO-LPS.md](DEMO-LPS.md) describes the implemented private demo container,
+save/reopen flow and exact conformance limits. This resolves the demo permission
+question below. It does not complete the native writer or its normative CORE
+mapping, and its experimental CORE must not be described as interoperable output.
+
+## Original native decision boundary
 
 The format's verification table in `core_plan/spec/LPS-FORMAT-SPEC.md` recognizes
 **Unsigned / draft** when no `SIGN` chunk exists, with a prominent warning and
@@ -14,7 +22,7 @@ the public writer to have validated, compatibility-checked, signed and authorize
 state before `lpsw_emit` succeeds. Handling an imported unsigned file does not
 automatically authorize a writer to issue one.
 
-The pending question is whether the studio should additionally export explicitly
+At the initial audit, the question was whether the studio should additionally export explicitly
 unsigned drafts, or wait for authorized digital signing before any `.lps` export.
 An unsigned draft API would be a deliberate addition to the writer contract;
 the existing authorized-emission gate would remain intact. No decision has been

@@ -1,6 +1,7 @@
 import { parseConsultation } from "../../../server/src/clinical-model";
 import { practice } from "./branding";
 import { workspaceFetch } from "./session";
+import { demoPrescription } from "../../../server/src/demo-prescription";
 export { parseConsultation };
 export type {
   Patient,
@@ -99,28 +100,12 @@ export function newConsultation(): ConsultationInput {
   };
 }
 export function exampleConsultation(): ConsultationInput {
-  const draft = newConsultation();
+  const draft = demoPrescription();
   return {
     ...draft,
-    synthetic: true,
-    patient: {
-      ...draft.patient,
-      name: "Ayesha Rahman",
-      age: "32 years",
-      sex: "Female",
-      reference: "DEMO-001",
-    },
-    clinician: {
-      name: "Demo clinician",
-      registration: "Demonstration only",
-      clinic: "Meadow Clinic · Fictional practice",
-    },
-    complaints: "Follow-up visit to discuss the patient’s recorded symptoms.",
-    history:
-      "Synthetic example for exploring the workspace. No real patient information.",
-    assessment: "Assessment to be entered by the reviewing clinician.",
-    advice: "Bring previous reports to the next consultation.",
-    followUp: "To be arranged after review.",
+    id: crypto.randomUUID(),
+    patient: { ...draft.patient, id: crypto.randomUUID() },
+    medications: draft.medications.map(item => ({ ...item, id: crypto.randomUUID() })),
   };
 }
 export function importDraft(value: unknown): ConsultationInput {
@@ -148,7 +133,7 @@ export function serializeDraft(draft: ConsultationInput) {
 }
 export function download(
   name: string,
-  contents: string,
+  contents: string | Uint8Array<ArrayBuffer>,
   type = "application/json",
 ) {
   const url = URL.createObjectURL(new Blob([contents], { type }));

@@ -1224,7 +1224,7 @@ export function ShowcaseWorkspace({
             map.
           </p>
         </div>
-        <Badge>UI coverage ≠ runtime acceptance</Badge>
+        <button className="button primary" onClick={() => navigate("demo")}>Open prescription demo</button>
       </div>
       <div className="scene-grid">
         {scenes.map(([id, title, page, description]) => (

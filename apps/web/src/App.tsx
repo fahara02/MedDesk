@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { decodeDemoLps, encodeDemoLps } from "../../server/src/demo-lps";
 import {
   api,
   blankMedication,
@@ -26,6 +27,7 @@ import { Studio } from "./components/DocumentStudio";
 import { appendMedicine, syncDocumentFields } from "./lib/document";
 import { Settings } from "./components/Settings";
 import { DesktopBridges } from "./components/DesktopBridges";
+import { PrescriptionDemo } from "./components/PrescriptionDemo";
 import { Assistant } from "./components/Assistant";
 import {
   EvidenceWorkspace,
@@ -47,6 +49,7 @@ const navigation = [
   ["pharmacy", "Pharmacy", "pharmacy"],
   ["evidence", "Evidence & trust", "evidence"],
   ["showcase", "Product showcase", "showcase"],
+  ["demo", "Prescription demo", "file"],
 ] as const;
 const STORAGE = "meddesk.workspace.v1";
 const draftKey = (draft: ConsultationInput) =>
@@ -54,16 +57,18 @@ const draftKey = (draft: ConsultationInput) =>
 function recoverDraft() {
   try {
     const raw = localStorage.getItem(STORAGE);
-    if (raw)
-      return parseConsultation(JSON.parse(raw), true) ?? newConsultation();
+    if (raw) {
+      const draft = parseConsultation(JSON.parse(raw), true);
+      if (draft) return draft;
+    }
   } catch {}
-  return newConsultation();
+  return exampleConsultation();
 }
 
 export default function App({ onLogout }: { onLogout?: () => void } = {}) {
   const [draft, setDraft] = useState<ConsultationInput>(recoverDraft),
     [page, setPage] = useState(() =>
-      window.location.hash === "#vitals" ? "vitals" : "studio",
+      window.location.hash === "#demo" ? "demo" : window.location.hash === "#vitals" ? "vitals" : "studio",
     ),
     [mobile, setMobile] = useState(false);
   const [role, setRole] = useState("doctor");
@@ -134,7 +139,10 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
     return () => clearTimeout(noticeTimer.current);
   }, []);
   useEffect(() => {
-    const openSetup = () => { if (window.location.hash === "#install-band") setModal("bridge"); };
+    const openSetup = () => {
+      if (window.location.hash === "#install-band") setModal("bridge");
+      if (window.location.hash === "#demo") { setPage("demo"); setModal(null); }
+    };
     window.addEventListener("hashchange", openSetup);
     return () => window.removeEventListener("hashchange", openSetup);
   }, []);
@@ -209,7 +217,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
           ? { ...current, revision: clean.revision }
           : current,
       );
-      notify("Consultation saved on this computer.");
+      notify("Consultation saved.");
       void refresh();
       return true;
     } catch (e) {
@@ -240,7 +248,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
   }
   const makeNew = () => {
     const next = newConsultation();
-    next.clinician = { ...draft.clinician };
+    if (!draft.synthetic) next.clinician = { ...draft.clinician };
     replace(next);
   };
   const open = async (id: string) => {
@@ -274,12 +282,21 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
     download(`meddesk-${draft.date}.json`, serializeDraft(draft));
     notify("MedDesk draft downloaded. This is a JSON workspace file.");
   };
+  const exportLps = () => {
+    try {
+      download(`meddesk-demo-${draft.date}.lps`, encodeDemoLps(draft), "application/octet-stream");
+      notify("Unsigned demo LPS saved. Use Open LPS to reopen it in MedDesk.");
+    } catch (e) { notify((e as Error).message); }
+  };
   const readFile = async (file?: File) => {
     if (!file) return;
     try {
       if (file.size > 1024 * 1024)
         throw new Error("Draft imports must be smaller than 1 MB.");
-      replace(importDraft(JSON.parse(await file.text())));
+      const imported = file.name.toLowerCase().endsWith(".lps")
+        ? importDraft({ format: "meddesk-draft/1", draft: decodeDemoLps(new Uint8Array(await file.arrayBuffer())) })
+        : importDraft(JSON.parse(await file.text()));
+      replace(imported);
       notify(
         "Imported as a new draft. Source files and device readings must be linked locally.",
       );
@@ -460,6 +477,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
           )}
           {page === "studio" && (
             <Studio
+              key={draft.id}
               draft={draft}
               update={updateDraft}
               onNew={makeNew}
@@ -468,6 +486,9 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
               onDevices={() => navigate("vitals")}
               onAssistant={() => setAssistantOpen(true)}
               onExport={exportDraft}
+              onExportLps={exportLps}
+              onOpenLps={() => fileInput.current?.click()}
+              onPdf={() => window.print()}
               onReview={() => setModal("review")}
               onSave={() => void save()}
               saving={saving}
@@ -547,6 +568,7 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
           )}
           {page === "pharmacy" && <PharmacyWorkspace draft={draft} />}
           {page === "showcase" && <ShowcaseWorkspace navigate={navigate} />}
+          {page === "demo" && <PrescriptionDemo onUse={() => replace(exampleConsultation())} onOpen={() => fileInput.current?.click()} />}
           {page === "assistant" && (
             <div className="assistant-page panel">
               <Assistant draft={draft} navigate={assistantNavigation} />
@@ -577,7 +599,8 @@ export default function App({ onLogout }: { onLogout?: () => void } = {}) {
         ref={fileInput}
         hidden
         type="file"
-        accept=".json"
+        accept=".json,.lps"
+        aria-label="Open prescription file"
         onChange={(e) => void readFile(e.target.files?.[0])}
       />
       {notice && (

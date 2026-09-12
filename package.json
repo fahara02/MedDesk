@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "concurrently -n server,web -c cyan,magenta \"npm run dev --workspace @meddesk/server\" \"npm run dev --workspace @meddesk/web\"",
     "build": "npm run build --workspace @meddesk/web && npm run build --workspace @meddesk/server",
-    "test": "npm run test --workspace @meddesk/server && npm run test --workspace @meddesk/web",
+    "test": "npm run test --workspace @meddesk/server && npm run test --workspace @meddesk/web && npm run test:demo",
+    "demo:build": "node --import tsx scripts/build-demo-prescription.mjs",
+    "test:demo": "node --import tsx --test scripts/test-demo-prescription.mjs",
     "typecheck": "npm run typecheck --workspace @meddesk/server && npm run typecheck --workspace @meddesk/web",
     "test:integration": "node --test scripts/test-api.mjs scripts/test-bridge-api.mjs",
     "package:bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-bridge.ps1",
@@ -16,6 +18,7 @@
     "start": "npm run start --workspace @meddesk/server"
   },
   "devDependencies": {
-    "concurrently": "^10.0.5"
+    "concurrently": "^10.0.5",
+    "pdfkit": "0.20.2"
   }
 }

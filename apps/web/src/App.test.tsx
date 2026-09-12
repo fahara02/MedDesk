@@ -10,8 +10,9 @@ import {
   act,
 } from "@testing-library/react";
 import App from "./App";
-import { importDraft, newConsultation, blankMedication } from "./lib/clinic";
+import { importDraft, newConsultation, blankMedication, exampleConsultation } from "./lib/clinic";
 import coverage from "./content/coverage.json";
+import { decodeDemoLps, encodeDemoLps } from "../../server/src/demo-lps";
 
 let records: Record<string, any>;
 it("loads the doctor's saved signature into the footer and exposes the website installer", async () => {
@@ -41,6 +42,7 @@ it("reopens installer setup with its still-valid computer name and enrollment co
 beforeEach(() => {
   records = {};
   localStorage.clear();
+  localStorage.setItem("meddesk.workspace.v1", JSON.stringify(newConsultation()));
   Object.defineProperty(Range.prototype, "getClientRects", {
     configurable: true,
     value: () => [],
@@ -135,6 +137,105 @@ afterEach(() => {
 });
 
 describe("doctor workspace", () => {
+  it("starts fresh workspaces with an editable demo and downloads the current LPS, with PDF printing available", async () => {
+    localStorage.clear();
+    let downloaded: Blob | undefined;
+    const originalUrl = URL.createObjectURL;
+    URL.createObjectURL = vi.fn((blob: Blob) => { downloaded = blob; return "blob:test"; });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    try {
+      render(<App />);
+      expect(fieldElement("patient.name").textContent).toBe("Ayesha Rahman");
+      await writeField("dose", "0.500 mg");
+      await writeField("advice", "Keep exact text\nপ্রতিদিন");
+      fireEvent.click(screen.getByRole("button", { name: "Save as LPS" }));
+      expect(click).toHaveBeenCalledOnce();
+      const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject; reader.readAsArrayBuffer(downloaded!);
+      });
+      const decoded = decodeDemoLps(new Uint8Array(bytes));
+      expect(decoded.medications[0].dose).toBe("0.500 mg");
+      expect(decoded.advice).toBe("Keep exact text\nপ্রতিদিন");
+      expect(decoded.document?.type).toBe("doc");
+      fireEvent.click(screen.getByRole("button", { name: "Save as PDF" }));
+      expect(print).toHaveBeenCalledOnce();
+    } finally { URL.createObjectURL = originalUrl; click.mockRestore(); print.mockRestore(); }
+  });
+
+  it("opens a downloaded demo LPS as an editable new record and refuses a corrupt file", async () => {
+    render(<App />);
+    const original = exampleConsultation(), bytes = encodeDemoLps(original);
+    const file = new File([bytes], "prescription.lps");
+    Object.defineProperty(file, "arrayBuffer", { value: async () => bytes.buffer });
+    fireEvent.change(screen.getByLabelText("Open prescription file"), { target: { files: [file] } });
+    await waitFor(() => expect(fieldElement("patient.name").textContent).toBe("Ayesha Rahman"));
+    fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
+    await waitFor(() => expect(Object.values(records)).toHaveLength(1));
+    expect(Object.values(records)[0].id).not.toBe(original.id);
+    expect(Object.values(records)[0].medications).toEqual(original.medications);
+    const corrupt = bytes.slice(); corrupt[70] ^= 1;
+    const bad = new File([corrupt], "damaged.lps");
+    Object.defineProperty(bad, "arrayBuffer", { value: async () => corrupt.buffer });
+    fireEvent.change(screen.getByLabelText("Open prescription file"), { target: { files: [bad] } });
+    await screen.findByText(/Choose an intact MedDesk demo LPS/);
+    expect(fieldElement("patient.name").textContent).toBe("Ayesha Rahman");
+  });
+
+  it("keeps an existing recovered consultation instead of replacing it with the default demo", () => {
+    const draft = newConsultation(); draft.patient.name = "Preserved patient";
+    localStorage.setItem("meddesk.workspace.v1", JSON.stringify(draft));
+    render(<App />);
+    expect(fieldElement("patient.name").textContent).toBe("Preserved patient");
+    expect(screen.queryByRole("button", { name: "Save as LPS" })).toBeNull();
+  });
+  it("opens the populated demo, saves an editable copy, and reopens its medicines and notes", async () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Prescription demo" }));
+    expect(screen.getByRole("link", { name: "Save sample as PDF" }).getAttribute("href")).toBe("/demo/ayesha-rahman-prescription.pdf");
+    expect(screen.getByRole("link", { name: "Save sample as LPS" }).getAttribute("href")).toBe("/demo/ayesha-rahman-prescription.lps");
+    expect(screen.getByText("Ayesha Rahman")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open editable copy" }));
+    expect(fieldElement("patient.name").textContent).toBe("Ayesha Rahman");
+    expect(fieldElement("dose").textContent).toBe("1 tablet (10 mg)");
+    fireEvent.click(screen.getByRole("button", { name: "Save consultation" }));
+    await waitFor(() => expect(Object.values(records)).toHaveLength(1));
+    const saved = Object.values(records)[0];
+    expect(saved.synthetic).toBe(true);
+    expect(saved.medications.map((item: any) => item.name)).toEqual(["Cetirizine", "Paracetamol"]);
+    expect(saved.vitalReadingIds).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Patient records" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+    await waitFor(() => expect(fieldElement("assessment").textContent).toContain("Allergic rhinitis"));
+    expect(fieldElement("followUp").textContent).toContain("5 days");
+    fireEvent.click(screen.getByRole("button", { name: /Start a real consultation/ }));
+    expect(fieldElement("patient.name").textContent).toBe("");
+    expect(fieldElement("clinician.name").textContent).not.toContain("Demo");
+    expect(screen.queryByText("Fictional example · not for patient use")).toBeNull();
+  });
+
+  it("visiting the demo or cancelling its editable copy preserves the current unsaved consultation", async () => {
+    render(<App />);
+    await writeField("patient.name", "Keep current patient");
+    fireEvent.click(screen.getByRole("button", { name: "Prescription demo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open editable copy" }));
+    expect(screen.getByRole("dialog", { name: "Keep the current draft?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prescription studio" }));
+    expect(fieldElement("patient.name").textContent).toBe("Keep current patient");
+  });
+
+  it("creates independent demo copies and leaves normal new consultations empty", () => {
+    const first = exampleConsultation(), second = exampleConsultation(), real = newConsultation();
+    expect(first.id).not.toBe(second.id);
+    expect(first.patient.id).not.toBe(second.patient.id);
+    expect(first.medications[0].id).not.toBe(second.medications[0].id);
+    expect(real.synthetic).toBe(false);
+    expect(real.medications).toEqual([]);
+    expect(real.complaints).toBe("");
+  });
+
   it("puts reviewed dictation in the selected prescription field and saves its projection", async () => {
     render(<App />);
     await writeField("patient.name", "Synthetic dictation mapping");

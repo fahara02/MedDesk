@@ -1,0 +1,14 @@
+{
+  "fixture": "demo-bd-001",
+  "patient": "Ayesha Rahman",
+  "pages": 1,
+  "pdfBytes": 4244,
+  "pdfSha256": "66bc9056ae2c21129156bbebd38249dc44e0d182abb53637be391cafb708c198",
+  "sourceSha256": "a1064fa377cd63d97b94e1aa080bfbfa811fb7c1064760a1d6d1677a8061395f",
+  "nativeLps": false,
+  "demoLps": true,
+  "lpsBytes": 2312,
+  "lpsSha256": "80e82863908f2243d918956967adc7ec2820cfa9dd61e1aa423ac0e8e6931102",
+  "lpsProfile": "meddesk-demo/1",
+  "lpsSigned": false
+}

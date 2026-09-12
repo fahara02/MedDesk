@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-12T01:02:59.290Z",
+  "release": "20260912-prescription-demo",
+  "url": "https://medesk.lifeplusbd.tech/#demo",
+  "assets": {
+    "bundle": "/assets/index-Dt6hNHwQ.js",
+    "css": "/assets/index-DqaFMCY8.css",
+    "matchBuiltFiles": true
+  },
+  "pdf": {
+    "bytes": 4244,
+    "sha256": "66bc9056ae2c21129156bbebd38249dc44e0d182abb53637be391cafb708c198",
+    "pages": 1,
+    "matchesVisuallyInspectedPdf": true
+  },
+  "nativeLps": "Unavailable; not represented as a generated file",
+  "createdDemoRecord": true,
+  "savedRecord": {
+    "id": "ed000001-2026-4000-8000-000000000001",
+    "synthetic": true,
+    "medicines": 2,
+    "exactFieldsReadBack": true
+  },
+  "verification": {
+    "serverTests": 25,
+    "webTests": 61,
+    "demoArtifactTests": 2,
+    "httpIntegrationTests": 2,
+    "physicalWebSkipped": 1,
+    "pdfVisualReview": "One-page Poppler PNG inspected; selectable text extracted; no clipping or overlap observed.",
+    "browserVisualReview": "No browser connection available in prior check."
+  }
+}

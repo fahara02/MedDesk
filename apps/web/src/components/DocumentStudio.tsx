@@ -27,6 +27,9 @@ export function Studio({
   onFindPatient,
   onDevices,
   onExport,
+  onExportLps,
+  onOpenLps,
+  onPdf,
   onReview,
   onSave,
   saving,
@@ -41,6 +44,9 @@ export function Studio({
   onDevices: () => void;
   onAssistant: () => void;
   onExport: () => void;
+  onExportLps?: () => void;
+  onOpenLps?: () => void;
+  onPdf?: () => void;
   onReview: () => void;
   onSave: () => void;
   saving: boolean;
@@ -238,6 +244,9 @@ export function Studio({
           <button className="button small" onClick={onExport}>
             Export draft
           </button>
+          {draft.synthetic && onExportLps && <button className="button small" onClick={onExportLps}>Save as LPS</button>}
+          {onOpenLps && <button className="button small" onClick={onOpenLps}>Open LPS</button>}
+          {onPdf && <button className="button small" onClick={onPdf}>Save as PDF</button>}
           <button className="button small" onClick={onReview}>
             <Icon name="print" size={15} />
             Print

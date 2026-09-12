@@ -4,7 +4,30 @@ Updated September 12, 2026. Active implementation is **E:\MedDesk**. The separat
 native project at E:\Projects\LabaidAI-ePrescription remains paused and was not
 edited for this delivery.
 
-## Latest delivery — visible Stop and prescription field placement
+## Latest delivery — filled prescription and demo LPS/PDF
+
+Live release: `/opt/meddesk/releases/20260912-demo-lps`. Fresh browser workspaces
+open an editable fictional Ayesha Rahman prescription. Existing recovery drafts
+are preserved. `/#demo` downloads both the displayed sample PDF and an unsigned
+demo LPS; Open LPS restores an editable copy. Studio Save as LPS exports current
+fictional edits and Save as PDF opens the current document's print dialog.
+
+The owner explicitly approved relaxed rules for the personal demo. This is a
+private demonstration container with LPS framing and an experimental CBOR CORE,
+not the native CORE-SCHEMA mapping or completed native writer. See
+[DEMO-LPS.md](DEMO-LPS.md). Native task counts remain 57/95; lanes stay paused.
+No real source/device references or production consultations enter demo export.
+The sample is 2,312 bytes as demo LPS and 4,244 bytes as PDF. Exact readback,
+every byte corruption/truncation, Unicode/decimal text and edited rich documents
+are covered. PDF remains the previously rendered/inspected one-page artifact.
+
+97 application checks passed: 25 server, 64 web, six artifact checks, two HTTP
+integrations; one physical web test skipped. Browser discovery remained
+unavailable, so actual browser download clicks and print pagination are not
+visually verified. The live HTTP file/bundle evidence is in
+`reports/demo-lps-deployment-20260912.json`. CRC detects corruption, not authenticity.
+
+## Previous delivery — visible Stop and prescription field placement
 
 Live release: `/opt/meddesk/releases/20260912-dictation-fields`, September 12,
 06:37 Dhaka. Recording controls now sit outside the scrolling tool body. A large

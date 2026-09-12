@@ -7,6 +7,8 @@ project's 95 engineering tasks. This matrix does not alter that task denominator
 |---|---|---|
 | Full-width studio and side tools | Implemented | Tiptap canvas, formatting, tables; built and DOM-tested. Visual browser QA unavailable. |
 | Document save/reopen | Verified locally | Exact doses, Bangla, tables and signature images pass save tests. |
+| Filled prescription demo | Deployed | Fresh workspaces open Ayesha Rahman with two medicines and complete notes; existing recovery drafts preserved. `/#demo` has both downloads. |
+| Demo LPS / PDF comparison | Deployed; round-trip tested | Demo LPS 2,312 bytes; PDF 4,244 bytes. Open LPS restores editable fields; studio exports current fictional edits. Private experimental CORE, unsigned; see DEMO-LPS.md. |
 | All drug files seeded | Verified locally | 9,763 products / 14 CSVs; zero import errors; SQLite index populated. |
 | Drug retrieval | Verified locally | FTS5, selected-product context, source hashes/URLs and actual nonempty excerpts. |
 | Working AI assistant | Verified remotely | Requested backend model responds successfully; HTTPS application test retrieved eight sources, cited source/document and preserved `0.500`. Model names are hidden in the UI. |
@@ -18,7 +20,7 @@ project's 95 engineering tasks. This matrix does not alter that task denominator
 | Prescription language selection | Deployed | English default; selectable English/Bangla labels and speech defaults; authored text unchanged. |
 | Model comparison | Text screening complete; audio pending | All 165 catalog entries classified; 92 text candidates tested, 14 responded and passed three synthetic checks. This is not a clinical quality ranking. |
 | Doctor signature placement | Deployed | Supplied white-background image verified over authenticated HTTPS and placed in Dr. Kamal Uddin's draft footer. Existing signatures and other doctors retained; certificate signing separate. |
-| Genuine `.lps` saving | Unfinished | Native implementation gaps remain; unsigned-draft versus authorized-export decision requested. See [export boundary](NATIVE-EXPORT.md). |
+| Native interoperable `.lps` saving | Unfinished | Owner approved unsigned private demo export, now implemented separately. Production native schema/writer and interoperability gaps remain. See [export boundary](NATIVE-EXPORT.md). |
 | Installable Windows bridge | Website download verified | Reopen `/#install-band`; computer name and valid enrollment code retained within the tab. Installer explains code versus band key. Full hosted executable matches extraction-verified package. Fresh-PC installation unverified. |
 | Desktop → HTTPS → SSE | Synthetic integration verified | Actual Windows daemon tested for TLS upload failure, stable-ID retry and remote stop. Physical remote verification pending. |
 | Multiple PCs and offline behavior | Verified locally | Enrollment, revocation, per-PC selector, bounded durable queue and historical timestamps. |

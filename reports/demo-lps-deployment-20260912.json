@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-12T01:25:45.667Z",
+  "release": "20260912-demo-lps",
+  "url": "https://medesk.lifeplusbd.tech/#demo",
+  "assets": {
+    "bundle": "/assets/index-C71MVMiM.js",
+    "css": "/assets/index-DqaFMCY8.css",
+    "matchBuiltFiles": true
+  },
+  "lps": {
+    "bytes": 2312,
+    "sha256": "80e82863908f2243d918956967adc7ec2820cfa9dd61e1aa423ac0e8e6931102",
+    "contentType": "application/octet-stream",
+    "exactSourceMatch": true
+  },
+  "pdf": {
+    "bytes": 4244,
+    "sha256": "66bc9056ae2c21129156bbebd38249dc44e0d182abb53637be391cafb708c198",
+    "contentType": "application/pdf",
+    "exactSourceMatch": true
+  },
+  "capabilities": {
+    "nativeLps": false,
+    "demoLps": true
+  },
+  "verification": {
+    "serverTests": 25,
+    "webTests": 64,
+    "demoArtifactTests": 6,
+    "httpIntegrationTests": 2,
+    "physicalWebSkipped": 1,
+    "actualHostedLpsDecoded": true,
+    "allSampleFieldsEqual": true,
+    "browserVisualReview": "Browser connection unavailable.",
+    "pdfVisualReview": "PDF unchanged from the inspected one-page Poppler render; exact hash verified."
+  }
+}
